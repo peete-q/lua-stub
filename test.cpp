@@ -24,7 +24,6 @@ int main()
 {
 	luastub::state_proxy L;
 	L->openlibs();
-	
 	L->dostring(
 		"tb = {			"
 		"	n = 1,		"
