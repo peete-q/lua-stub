@@ -90,4 +90,8 @@ manage object life scope smartly:
 	point pt;
 	luastub::stack_object b = classpoint.newobject(&pt); // pass pointer as lightuserdata only
 	
+	g.set("a", a);
+	g.set("b", b);
+	// use 'a' or 'b' as same as 'pt' in lua
+	
 run test.cpp for more
