@@ -5,7 +5,7 @@ A lua wraper for c++, as flexible as LuaPlus, as convenient as luabind
 ##feature
 
 * think in lua
-* not intrusion into lua source
+* not intrusion into lua source code
 * depend self
 * not need to compile
 * more flexible
@@ -89,3 +89,5 @@ manage object life scope smartly:
 	// manage life scope in c++ by yourself
 	point pt;
 	luastub::stack_object b = classpoint.newobject(&pt); // pass pointer as lightuserdata only
+	
+more see test.cpp
