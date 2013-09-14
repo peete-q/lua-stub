@@ -90,4 +90,4 @@ manage object life scope smartly:
 	point pt;
 	luastub::stack_object b = classpoint.newobject(&pt); // pass pointer as lightuserdata only
 	
-more see test.cpp
+run test.cpp for more
