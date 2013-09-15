@@ -5,12 +5,10 @@ A lua wraper for c++, as flexible as LuaPlus, as convenient as luabind
 ##feature
 
 * think in lua
-* not intrusion into lua source code
-* depend self
-* not need to compile
-* more flexible
-* more convenient
-* less source code
+* namimg the same as lua
+* not invade into lua source code
+* no dependency
+* no need to compile
 * smart life scope management
 
 ##example
@@ -44,7 +42,7 @@ use lua object:
 
     tb.set(1, 1);       // tb[1] = 1
     tb.set("x", "xxx"); // tb.x = "xxx"
-    tb.set("ref", tb);   // tb.ref = tb
+    tb.set("ref", tb);  // tb.ref = tb
     
 traversal lua table:
 
@@ -72,10 +70,10 @@ export c++ class to lua:
       .def_property("shared", &point::shared)
       .def_property("global_var", &global_var);
 
-use class point in lua
+use exported class in lua
 
     pt = point(1, 1)
-    pt.shared = 1000 -- share the same var in all objects of the class point
+    pt.shared = 100	-- the var shared in all objects of the class point
     print(pt.x, pt.y, pt.shared)
     print(pt.classname())
     pt:show()
@@ -88,10 +86,10 @@ manage object life scope smartly:
 	
 	// manage life scope in c++ by yourself
 	point pt;
-	luastub::stack_object b = classpoint.newobject(&pt); // pass pointer as lightuserdata only
+	luastub::stack_object b = classpoint.newobject(&pt); // pass the pointer as a lightuserdata
 	
 	g.set("a", a);
 	g.set("b", b);
-	// use 'a' or 'b' as same as 'pt' in lua
+	// use 'a' or 'b' like 'pt' in lua
 	
 run test.cpp for more
