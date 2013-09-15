@@ -16,7 +16,9 @@ namespace luastub
 		stack_holder(state *state, int index);
 	private:
 		friend class stack_indexer;
-		int m_value;
+		friend class registry_holder;
+		state *m_state;
+		int m_index;
 	};
 
 	class registry_holder
@@ -25,11 +27,14 @@ namespace luastub
 		registry_holder();
 		registry_holder(state *state, int index);
 		~registry_holder();
+		registry_holder &operator =(const stack_holder &other);
+		registry_holder &operator =(const registry_holder &other);
 		void bind(state *state, int index);
 	private:
 		friend class registry_indexer;
 		state *m_state;
-		int m_value;
+		int *m_refcount;
+		int m_ref;
 	};
 
 	class stack_indexer
@@ -38,7 +43,7 @@ namespace luastub
 		stack_indexer(const stack_holder &other);
 		operator int();
 	private:
-		int m_value;
+		int m_index;
 	};
 
 	class registry_indexer
@@ -49,7 +54,7 @@ namespace luastub
 		operator int();
 	private:
 		state *m_state;
-		int m_value;
+		int m_index;
 	};
 
 	template<typename Indexer, typename Holder>
@@ -599,24 +604,20 @@ namespace luastub
 		}
 		object(const object &o)
 		{
-			assign(o);
+			m_state = o.m_state;
+			m_holder = o.m_holder;
 		}
 		template<typename T>
 		object(const T &o)
 		{
-			assign(o);
+			m_state = o.m_state;
+			m_holder = o.m_holder;
 		}
 		template<typename T>
 		object &operator = (const T &o)
 		{
-			assign(o);
-		}
-		template<typename T>
-		void assign(const T &o)
-		{
-			typename T::indexer_t index(o.m_holder);
 			m_state = o.m_state;
-			m_holder.bind(m_state, index);
+			m_holder = o.m_holder;
 		}
 	};
 	
@@ -686,14 +687,14 @@ namespace luastub
 	};
 
 	// stack_holder
-	inline stack_holder::stack_holder() : m_value(0)
+	inline stack_holder::stack_holder() : m_state(0), m_index(0)
 	{
 	}
-	inline stack_holder::stack_holder(state *state, int index) : m_value(state->absindex(index))
+	inline stack_holder::stack_holder(state *state, int index) : m_state(state), m_index(state->absindex(index))
 	{
 	}
 	// registry_holder
-	inline registry_holder::registry_holder() : m_state(0), m_value(LUA_REFNIL)
+	inline registry_holder::registry_holder() : m_state(0), m_ref(LUA_REFNIL)
 	{
 	}
 	inline registry_holder::registry_holder(state *state, int index)
@@ -702,36 +703,55 @@ namespace luastub
 	}
 	inline registry_holder::~registry_holder()
 	{
-		m_state->unref(LUA_REGISTRYINDEX, m_value);
+		if (m_refcount && --(*m_refcount) == 0)
+		{
+			delete m_refcount;
+			m_state->unref(LUA_REGISTRYINDEX, m_ref);
+		}
+	}
+	inline registry_holder &registry_holder::operator =(const stack_holder &other)
+	{
+		bind(other.m_state, other.m_index);
+		return *this;
+	}
+	inline registry_holder &registry_holder::operator =(const registry_holder &other)
+	{
+		m_state = other.m_state;
+		m_ref = other.m_ref;
+		m_refcount = other.m_refcount;
+		if (m_refcount)
+			++(*m_refcount);
+		return *this;
 	}
 	inline void registry_holder::bind(state *state, int index)
 	{
 		m_state = state;
 		m_state->pushvalue(m_state->absindex(index));
-		m_value = m_state->ref(LUA_REGISTRYINDEX);
-		assert(m_value != LUA_REFNIL);
+		m_ref = m_state->ref(LUA_REGISTRYINDEX);
+		m_refcount = new int(1);
+		assert(m_ref != LUA_REFNIL);
 	}
 	// stack_indexer
-	inline stack_indexer::stack_indexer(const stack_holder &other) : m_value(other.m_value)
+	inline stack_indexer::stack_indexer(const stack_holder &other) : m_index(other.m_index)
 	{
 	}
 	inline stack_indexer::operator int()
 	{
-		return m_value;
+		return m_index;
 	}
 	// registry_indexer
 	inline registry_indexer::registry_indexer(const registry_holder &other) : m_state(other.m_state)
 	{
-		m_state->rawgeti(LUA_REGISTRYINDEX, other.m_value);
-		m_value = m_state->gettop();
+		m_state->rawgeti(LUA_REGISTRYINDEX, other.m_ref);
+		m_index = m_state->gettop();
 	}
 	inline registry_indexer::~registry_indexer()
 	{
-		m_state->remove(m_value);
+		m_state->remove(m_index);
 	}
 	inline registry_indexer::operator int()
 	{
-		return m_value;
+		return m_index;
 	}
 }
 #endif
