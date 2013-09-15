@@ -1476,244 +1476,178 @@ namespace luastub
 
 	template <typename RT>
 	inline int call(RT (*func)(), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1>
 	inline int call(RT (*func)(P1), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2>
 	inline int call(RT (*func)(P1, P2), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3>
 	inline int call(RT (*func)(P1, P2, P3), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4>
 	inline int call(RT (*func)(P1, P2, P3, P4), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4,
 				typename P5>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4,
 				typename P5, typename P6>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4,
 				typename P5, typename P6, typename P7>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(func, L, index);
-	}
+		{return result_matcher<RT>::call(func, L, index);}
 
 
 	template <typename Callee, typename RT>
 	inline int call(Callee &callee, RT (Callee::*func)(), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT>
 	inline int call(Callee &callee, RT (Callee::*func)() const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1>
 	inline int call(Callee &callee, RT (Callee::*func)(P1), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1>
 	inline int call(Callee &callee, RT (Callee::*func)(P1) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5, typename P6>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5, typename P6>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5, typename P6, typename P7>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3,
 				typename P4, typename P5, typename P6, typename P7>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 
 	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) const, lua_State *L, int index)
-	{
-		return result_matcher<RT>::call(callee, func, L, index);
-	}
+		{return result_matcher<RT>::call(callee, func, L, index);}
 
 } // namespace luastub
 
@@ -1795,7 +1729,8 @@ namespace luastub
 		}
 	};
 
-	inline int state_function_dispatcher(lua_State *L) {
+	inline int state_function_dispatcher(lua_State *L)
+	{
 		typedef int (*Functor)(state*);
 		unsigned char *buffer = getupvalue(L, 1);
 		Functor &func = *(Functor*)(buffer);
@@ -1803,9 +1738,11 @@ namespace luastub
 	}
 
 	template <typename Callee>
-	class state_method_dispatcher {
+	class state_method_dispatcher
+	{
 	public:
-		static inline int dispatch(lua_State *L) {
+		static inline int dispatch(lua_State *L)
+		{
 			typedef int (Callee::*Functor)(state*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Callee &callee = **(Callee**)buffer;
@@ -1815,9 +1752,11 @@ namespace luastub
 	};
 
 	template <typename Callee>
-	class oo_state_method_dispatcher {
+	class oo_state_method_dispatcher
+	{
 	public:
-		static inline int dispatch(lua_State *L) {
+		static inline int dispatch(lua_State *L)
+		{
 			typedef int (Callee::*Functor)(state*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Functor &func = *(Functor*)(buffer);
