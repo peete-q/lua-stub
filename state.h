@@ -15,7 +15,7 @@ extern "C"
 
 namespace luastub
 {
-	static class nil_t {} nil;
+	const class nil_t {} nil;
 	
 	class stack_object;
 	
@@ -75,12 +75,13 @@ namespace luastub
 		stack_object pushcclosure(lua_CFunction fn, int n);
 		stack_object pushcfunction(lua_CFunction f);
 		stack_object pushboolean(bool value);
-		stack_object pushlightuserdata(void *p);
+		stack_object pushlightuserdata(void *ptr);
 		stack_object pushthread();
 		
 		stack_object getglobals();
 		stack_object getglobal(const char *var);
 		stack_object getstack(int index);
+		stack_object getregistry();
 		
 		stack_object gettable(int index);
 		stack_object getfield(int index, const char *key);
@@ -90,7 +91,6 @@ namespace luastub
 		stack_object getmetatable(int objindex);
 		stack_object newtable();
 		stack_object upvalue(int n);
-		
 		void *newuserdata(size_t size);
 		
 		void settable(int index);
@@ -168,12 +168,13 @@ namespace luastub
 	{
 	public:
 		stack_protector(state *state) : m_state(state), m_top(state->gettop()) {}
-		~stack_protector() {m_state->settop(m_top);}
+		~stack_protector() {restore();}
+		void restore() {if (m_top) m_state->settop(m_top), m_top = 0;}
 	private:
 		state *m_state;
 		int m_top;
 	};
 	
 }
-#include "state_imp.h"
+#include "state_inl.h"
 #endif

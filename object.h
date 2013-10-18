@@ -12,8 +12,18 @@ namespace luastub
 	class stack_holder
 	{
 	public:
+		class indexer
+		{
+		public:
+			indexer(const stack_holder &o) : m_index(o.m_index) {}
+			operator int() {return m_index;}
+		private:
+			int m_index;
+		};
+	public:
 		stack_holder();
 		stack_holder(state *state, int index);
+		void push() const;
 	private:
 		friend class stack_indexer;
 		friend class registry_holder;
@@ -24,45 +34,37 @@ namespace luastub
 	class registry_holder
 	{
 	public:
+		class indexer
+		{
+		public:
+			indexer(const registry_holder &o);
+			~indexer() {m_state->settop(m_index);}
+			operator int() {return m_index;}
+		private:
+			state *m_state;
+			int m_index;
+		};
+	public:
 		registry_holder();
 		registry_holder(state *state, int index);
 		~registry_holder();
 		registry_holder &operator =(const stack_holder &other);
 		registry_holder &operator =(const registry_holder &other);
 		void bind(state *state, int index);
+		void push() const;
 	private:
-		friend class registry_indexer;
+		friend class indexer;
 		state *m_state;
 		int *m_refcount;
 		int m_ref;
 	};
 
-	class stack_indexer
-	{
-	public:
-		stack_indexer(const stack_holder &other);
-		operator int();
-	private:
-		int m_index;
-	};
-
-	class registry_indexer
-	{
-	public:
-		registry_indexer(const registry_holder &other);
-		~registry_indexer();
-		operator int();
-	private:
-		state *m_state;
-		int m_index;
-	};
-
-	template<typename Indexer, typename Holder>
+	template<typename holder>
 	class basic_object
 	{
 	public:
-		typedef Indexer indexer_t;
-		typedef Holder holder_t;
+		typedef typename holder::indexer indexer_t;
+		typedef holder holder_t;
 	public:
 		basic_object() : m_state(0)
 		{
@@ -78,375 +80,177 @@ namespace luastub
 		{
 			return m_state ? m_state->cptr() : 0;
 		}
-		void push()
+		void push() const
 		{
-			Indexer index(m_holder);
-			m_state->pushvalue(index);
+			m_holder.push();
 		}
 		bool isnumber() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isnumber(index);
 		}
 		bool isstring() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isstring(index);
 		}
 		bool iscfunction() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->iscfunction(index);
 		}
 		bool isuserdata() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isuserdata(index);
 		}
 		bool isfunction() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isfunction(index);
 		}
 		bool istable() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->istable(index);
 		}
 		bool islightuserdata() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->islightuserdata(index);
 		}
 		bool isnil() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isnil(index);
 		}
 		bool isboolean() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isboolean(index);
 		}
 		bool isthread() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->isthread(index);
 		}
 		int type() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->type(index);
 		}
 		
 		bool rawequal(const basic_object &object) const
 		{
-			Indexer index1(m_holder);
-			Indexer index2(object.m_holder);
+			indexer_t index1(m_holder);
+			indexer_t index2(object.m_holder);
 			return m_state->rawequal(index1, index2);
 		}
 		int compare(const basic_object &object) const
 		{
-			Indexer index1(m_holder);
-			Indexer index2(object.m_holder);
+			indexer_t index1(m_holder);
+			indexer_t index2(object.m_holder);
 			return m_state->compare(index1, index2);
 		}
 		
 		lua_Number tonumber() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tonumber(index);
 		}
 		lua_Integer tointeger() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tointeger(index);
 		}
 		bool toboolean() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->toboolean(index);
 		}
 		const char *tolstring(size_t *len) const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tolstring(index, len);
 		}
 		const char *tostring() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tostring(index);
 		}
 		size_t objlen() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->objlen(index);
 		}
 		lua_CFunction tocfunction() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tocfunction(index);
 		}
 		void *touserdata() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->touserdata(index);
 		}
 		lua_State *tothread() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->tothread(index);
 		}
 		const void *topointer() const
 		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			return m_state->topointer(index);
 		}
 		template<typename T>
-		T *toobject() const
+		T *toany() const
 		{
-			return *(T**)touserdata();
+			return (T*)touserdata();
 		}
 		
-		void set(int key, nil_t)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->pushnil();
-			m_state->settable(index);
-		}
-		void set(const char *key, nil_t)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->pushnil();
-			m_state->settable(index);
-		}
-		template<typename K>
-		void set(K key, nil_t)
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->pushnil();
-			m_state->settable(index);
-		}
-		void set(int key, bool value)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->pushboolean(value);
-			m_state->settable(index);
-		}
-		void set(const char *key, bool value)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->pushboolean(value);
-			m_state->settable(index);
-		}
-		void set(int key, lua_Number value)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->pushnumber(value);
-			m_state->settable(index);
-		}
-		void set(const char *key, lua_Number value)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->pushnumber(value);
-			m_state->settable(index);
-		}
-		template<typename K>
-		void set(K key, lua_Number value)
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->pushnumber(value);
-			m_state->settable(index);
-		}
-		void set(int key, const char *value)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->pushstring(value);
-			m_state->settable(index);
-		}
-		void set(const char *key, const char *value)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->pushstring(value);
-			m_state->settable(index);
-		}
-		template<typename K>
-		void set(K key, const char *value)
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->pushstring(value);
-			m_state->settable(index);
-		}
-		template<typename V>
-		void set(int key, V *value)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->pushlightuserdata(value);
-			m_state->settable(index);
-		}
-		template<typename V>
-		void set(const char *key, V *value)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->pushlightuserdata(value);
-			m_state->settable(index);
-		}
-		template<typename K, typename V>
-		void set(K key, V *value)
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->pushlightuserdata(value);
-			m_state->settable(index);
-		}
-		template<typename V>
-		void set(int key, V value)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			value.push();
-			m_state->settable(index);
-		}
-		template<typename V>
-		void set(const char *key, V value)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			value.push();
-			m_state->settable(index);
-		}
 		template<typename K, typename V>
 		void set(K key, V value)
 		{
-			Indexer index(m_holder);
-			key.push();
-			value.push();
+			indexer_t index(m_holder);
+			luastub::push(m_state->cptr(), key);
+			luastub::push(m_state->cptr(), value);
 			m_state->settable(index);
 		}
-		basic_object get(int key) const
+		template<typename T>
+		void setmetatable(const T &value) const
 		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->gettable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		basic_object get(const char *key) const
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->gettable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		template<typename K>
-		basic_object get(K key) const
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->gettable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		void *newuserdata(int key, size_t size)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			void *ptr = m_state->newuserdata(size);
-			m_state->settable(index);
-			return ptr;
-		}
-		void *newuserdata(const char *key, size_t size)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			void *ptr = m_state->newuserdata(size);
-			m_state->settable(index);
-			return ptr;
-		}
-		template<typename K>
-		void *newuserdata(K key, size_t size)
-		{
-			Indexer index(m_holder);
-			key.push();
-			void *ptr = m_state->newuserdata(size);
-			m_state->settable(index);
-			return ptr;
-		}
-		basic_object newtable(int key)
-		{
-			Indexer index(m_holder);
-			m_state->pushnumber(key);
-			m_state->newtable();
-			m_state->settable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		basic_object newtable(const char *key)
-		{
-			Indexer index(m_holder);
-			m_state->pushstring(key);
-			m_state->newtable();
-			m_state->settable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		template<typename K>
-		basic_object newtable(K key)
-		{
-			Indexer index(m_holder);
-			key.push();
-			m_state->newtable();
-			m_state->settable(index);
-			return basic_object(m_state, m_state->gettop());
-		}
-		template<typename V>
-		void setmetatable(V value) const
-		{
-			Indexer index(m_holder);
+			indexer_t index(m_holder);
 			value.push();
 			m_state->setmetatable(index);
 		}
-		//
-		basic_object operator [](int key) const
+		template<typename T>
+		bool operator ==(T value) const
 		{
-			return get(key);
+			indexer_t index(m_holder);
+			return match<T>(m_state, index) && read<T>(m_state, index) == value;
 		}
-		basic_object operator [](const char *key) const
+		template<typename T>
+		bool operator ==(const basic_object<T> &value) const
 		{
-			return get(key);
+			indexer_t index(m_holder);
+			typename basic_object<T>::indexer_t index2(value.m_holer);
+			return m_state->equal(index, index2);
+		}
+		
+		// get
+		template<typename K>
+		basic_object get(K key) const
+		{
+			indexer_t index(m_holder);
+			luastub::push(m_state->cptr(), key);
+			m_state->gettable(index);
+			return basic_object(m_state, m_state->gettop());
 		}
 		template<typename K>
 		basic_object operator [](K key) const
 		{
 			return get(key);
-		}
-		bool operator ==(int value) const
-		{
-			return isnumber() && tonumber() == value;
-		}
-		bool operator ==(bool value) const
-		{
-			return isboolean() && toboolean() == value;
-		}
-		bool operator ==(const char *value) const
-		{
-			return isstring() && strcmp(tostring(), value) == 0;
-		}
-		template<typename V>
-		bool operator ==(V value) const
-		{
-			Indexer index1(m_holder);
-			typename V::indexer_t index2(value.m_holder);
-			return m_state->equal(index1, index2);
 		}
 		// def
 		void def(const char *key, int (*func)(state*), int nupvalues = 0)
@@ -572,10 +376,10 @@ namespace luastub
 		friend class object;
 		
 		state *m_state;
-		Holder m_holder;
+		holder_t m_holder;
 	};
 
-	class stack_object : public basic_object<stack_indexer, stack_holder>
+	class stack_object : public basic_object<stack_holder>
 	{
 	public:
 		stack_object() : basic_object()
@@ -584,16 +388,16 @@ namespace luastub
 		stack_object(state *state, int index) : basic_object(state, index)
 		{
 		}
-		stack_object(const basic_object<stack_indexer, stack_holder> &o)
+		stack_object(const basic_object<stack_holder> &o)
 		{
 			m_state = o.m_state;
 			m_holder = o.m_holder;
 		}
 	private:
-		stack_object(const basic_object<registry_indexer, registry_holder> &o);
+		stack_object(const basic_object<registry_holder> &o);
 	};
 
-	class object : public basic_object<registry_indexer, registry_holder>
+	class object : public basic_object<registry_holder>
 	{
 	public:
 		object() : basic_object()
@@ -693,6 +497,10 @@ namespace luastub
 	inline stack_holder::stack_holder(state *state, int index) : m_state(state), m_index(state->absindex(index))
 	{
 	}
+	inline void stack_holder::push() const
+	{
+		m_state->pushvalue(m_index);
+	}
 	// registry_holder
 	inline registry_holder::registry_holder() : m_state(0), m_ref(LUA_REFNIL)
 	{
@@ -707,6 +515,8 @@ namespace luastub
 		{
 			delete m_refcount;
 			m_state->unref(LUA_REGISTRYINDEX, m_ref);
+			m_refcount = 0;
+			m_state = 0;
 		}
 	}
 	inline registry_holder &registry_holder::operator =(const stack_holder &other)
@@ -726,32 +536,20 @@ namespace luastub
 	inline void registry_holder::bind(state *state, int index)
 	{
 		m_state = state;
-		m_state->pushvalue(m_state->absindex(index));
+		m_state->pushvalue(index);
 		m_ref = m_state->ref(LUA_REGISTRYINDEX);
 		m_refcount = new int(1);
 		assert(m_ref != LUA_REFNIL);
 	}
-	// stack_indexer
-	inline stack_indexer::stack_indexer(const stack_holder &other) : m_index(other.m_index)
+	inline void registry_holder::push() const
 	{
+		m_state->rawgeti(LUA_REGISTRYINDEX, m_ref);
+		m_state->gettop();
 	}
-	inline stack_indexer::operator int()
+	registry_holder::indexer::indexer(const registry_holder &o) : m_state(o.m_state)
 	{
-		return m_index;
-	}
-	// registry_indexer
-	inline registry_indexer::registry_indexer(const registry_holder &other) : m_state(other.m_state)
-	{
-		m_state->rawgeti(LUA_REGISTRYINDEX, other.m_ref);
+		m_state->rawgeti(LUA_REGISTRYINDEX, o.m_ref);
 		m_index = m_state->gettop();
-	}
-	inline registry_indexer::~registry_indexer()
-	{
-		m_state->remove(m_index);
-	}
-	inline registry_indexer::operator int()
-	{
-		return m_index;
 	}
 }
 #endif

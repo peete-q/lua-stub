@@ -30,7 +30,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1>
@@ -45,7 +45,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2>
@@ -61,7 +61,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2, typename P3>
@@ -78,7 +78,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2, typename P3, typename P4>
@@ -96,7 +96,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5>
@@ -115,7 +115,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
@@ -135,7 +135,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
@@ -156,7 +156,7 @@ namespace luastub {
 				const char *message = lua_tostring(L, -1);
 				state::function_error_cb(message);
 			}
-			return get(type_matcher<RT>(), L, -1);
+			return read<RT>(L, -1);
 		}
 
 	protected:

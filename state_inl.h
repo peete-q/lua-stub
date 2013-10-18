@@ -34,7 +34,6 @@ namespace luastub
 		
 	inline int state::equal(int index1, int index2) const {return lua_equal(cptr(), index1, index2);}
 	inline int state::rawequal(int index1, int index2) const {return lua_rawequal(cptr(), index1, index2);}
-	//inline int state::compare(int index1, int index2, int op) const;
 		
 	inline lua_Number state::tonumber(int index) const {return lua_tonumber(cptr(), index);}
 	inline lua_Integer state::tointeger(int index) const {return lua_tointeger(cptr(), index);}
@@ -63,12 +62,13 @@ namespace luastub
 	inline stack_object state::pushcclosure(lua_CFunction fn, int n) {lua_pushcclosure(cptr(), fn, n); return stack_object(this, gettop());}
 	inline stack_object state::pushcfunction(lua_CFunction f) {lua_pushcfunction(cptr(), f); return stack_object(this, gettop());}
 	inline stack_object state::pushboolean(bool value) {lua_pushboolean(cptr(), value); return stack_object(this, gettop());}
-	inline stack_object state::pushlightuserdata(void *p) {lua_pushlightuserdata(cptr(), p); return stack_object(this, gettop());}
+	inline stack_object state::pushlightuserdata(void *ptr) {lua_pushlightuserdata(cptr(), ptr); return stack_object(this, gettop());}
 	inline stack_object state::pushthread() {lua_pushthread(cptr()); return stack_object(this, gettop());}
 		
 	inline stack_object state::getglobals() {pushvalue(LUA_GLOBALSINDEX); return stack_object(this, gettop());}
 	inline stack_object state::getglobal(const char *var) {getfield(LUA_GLOBALSINDEX, var); return stack_object(this, gettop());}
 	inline stack_object state::getstack(int index) {return stack_object(this, index);}
+	inline stack_object state::getregistry() {lua_getregistry(cptr()); return stack_object(this, gettop());}
 	
 	inline stack_object state::gettable(int index) {lua_gettable(cptr(), index); return stack_object(this, gettop());}
 	inline stack_object state::getfield(int index, const char *key) {lua_getfield(cptr(), index, key); return stack_object(this, gettop());}

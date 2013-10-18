@@ -13,8 +13,6 @@ extern "C"
 
 namespace luastub
 {
-	class nil_t;
-	
 	inline void push(lua_State *L, bool value)					{lua_pushboolean(L, value);}
 	inline void push(lua_State *L, char value)					{lua_pushnumber(L, value);}
 	inline void push(lua_State *L, unsigned char value)			{lua_pushnumber(L, value);}
@@ -24,99 +22,114 @@ namespace luastub
 	inline void push(lua_State *L, unsigned int value)			{lua_pushnumber(L, value);}
 	inline void push(lua_State *L, long value)					{lua_pushnumber(L, value);}
 	inline void push(lua_State *L, unsigned long value)			{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, double value)				{lua_pushnumber(L, (lua_Number)value);}
-	inline void push(lua_State *L, float value)					{lua_pushnumber(L, (lua_Number)value);}
+	inline void push(lua_State *L, double value)				{lua_pushnumber(L, value);}
+	inline void push(lua_State *L, float value)					{lua_pushnumber(L, value);}
 	inline void push(lua_State *L, const char *value)			{lua_pushstring(L, value);}
 	inline void push(lua_State *L, const char *value, int len)	{lua_pushlstring(L, value, len);}
 	inline void push(lua_State *L, const nil_t&)				{lua_pushnil(L);}
 	inline void push(lua_State *L, lua_CFunction value)			{lua_pushcclosure(L, value, 0);}
+	inline void push(lua_State *L, void *value)					{lua_pushlightuserdata(L, value);}
 	inline void push(lua_State *L, const void *value)			{lua_pushlightuserdata(L, (void*)value);}
 	inline void push(lua_State *L, const std::string& value)	{lua_pushstring(L, value.c_str());}
-	template<class T>
+	template<typename T>
+	inline void push(lua_State *L, T *value)					{lua_pushlightuserdata(L, (void*)value);}
+	template<typename T>
+	inline void push(lua_State *L, const T *value)				{lua_pushlightuserdata(L, (void*)value);}
+	template<typename T>
 	inline void push(lua_State *L, T value)						{value.push();}
 
-	template<class T> 
-	struct type_matcher {};
-
-	inline bool	match(type_matcher<bool>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TBOOLEAN;}
-	inline bool	match(type_matcher<char>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<unsigned char>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<short>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<unsigned short>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<int>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<unsigned int>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<long>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<unsigned long>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	inline bool	match(type_matcher<float>, lua_State *L, int idx)
-		{int type = lua_type(L, idx);  return type == LUA_TNUMBER;}
-	inline bool	match(type_matcher<double>, lua_State *L, int idx)
-		{int type = lua_type(L, idx);  return type == LUA_TNUMBER;}
-	inline bool	match(type_matcher<const char*>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TSTRING;}
-	inline bool	match(type_matcher<lua_State*>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNONE;}
-	inline bool	match(type_matcher<luastub::state*>, lua_State *L, int idx)
-		{ return lua_type(L, idx) == LUA_TNONE;}
-	inline bool	match(type_matcher<void*>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TLIGHTUSERDATA;}
-	inline bool	match(type_matcher<std::string>, lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TSTRING;}
-
-	inline void				get(type_matcher<void>, lua_State*, int)
-		{}
-	inline bool				get(type_matcher<bool>, lua_State *L, int idx)
-		{return lua_toboolean(L, idx) != 0;}
-	inline char				get(type_matcher<char>, lua_State *L, int idx)
-		{return static_cast<char>(lua_tonumber(L, idx));}
-	inline unsigned char	get(type_matcher<unsigned char>, lua_State *L, int idx)
-		{return static_cast<unsigned char>(lua_tonumber(L, idx));}
-	inline short			get(type_matcher<short>, lua_State *L, int idx)
-		{return static_cast<short>(lua_tonumber(L, idx));}
-	inline unsigned short	get(type_matcher<unsigned short>, lua_State *L, int idx)
-		{return static_cast<unsigned short>(lua_tonumber(L, idx));}
-	inline int				get(type_matcher<int>, lua_State *L, int idx)
-		{return static_cast<int>(lua_tonumber(L, idx));}
-	inline unsigned int		get(type_matcher<unsigned int>, lua_State *L, int idx)
-		{return static_cast<unsigned int>(lua_tonumber(L, idx));}
-	inline long				get(type_matcher<long>, lua_State *L, int idx)
-		{return static_cast<long>(lua_tonumber(L, idx));}
-	inline unsigned long	get(type_matcher<unsigned long>, lua_State *L, int idx)
-		{return static_cast<unsigned long>(lua_tonumber(L, idx));}
-	inline float			get(type_matcher<float>, lua_State *L, int idx)
-		{return static_cast<float>(lua_tonumber(L, idx));}
-	inline double			get(type_matcher<double>, lua_State *L, int idx)
-		{return static_cast<double>(lua_tonumber(L, idx));}
-	inline const char*		get(type_matcher<const char*>, lua_State *L, int idx)
-		{return static_cast<const char*>(lua_tostring(L, idx));}
-	inline nil_t			get(type_matcher<nil_t>, lua_State *L, int idx)
-		{(void)L, (void)idx;  return nil_t();}
-	inline lua_CFunction	get(type_matcher<lua_CFunction>, lua_State *L, int idx)
-		{return static_cast<lua_CFunction>(lua_tocfunction(L, idx));}
-	inline void*			get(type_matcher<void*>, lua_State *L, int idx)
-		{return static_cast<void*>(lua_touserdata(L, idx));}
-	inline lua_State*		get(type_matcher<lua_State*>, lua_State *L, int /*idx*/)
-		{return L;}
-	inline state*			get(type_matcher<luastub::state*>, lua_State *L, int /*idx*/)
-		{return state::from(L);}
-	inline const char*		get(type_matcher<std::string>, lua_State *L, int idx)
-		{return static_cast<const char*>(lua_tostring(L, idx));}
 	template<typename T>
-	inline T				get(type_matcher<T>, lua_State *L, int idx)
-		{return T(state::from(L), idx);}
+	inline bool match(lua_State *L, int idx);
+	
+	template<typename T>
+	inline bool match(state *L, int idx)
+		{return match<T>(L->cptr(), idx);}
+	
+	template<> inline bool match<bool>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TBOOLEAN;}
+	template<> inline bool match<char>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<unsigned char>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<short>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<unsigned short>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<int>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<unsigned int>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<long>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<unsigned long>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<float>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<double>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNUMBER;}
+	template<> inline bool match<const char*>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TSTRING;}
+	template<> inline bool match<lua_State*>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNONE;}
+	template<> inline bool match<state*>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TNONE;}
+	template<> inline bool match<void*>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TLIGHTUSERDATA;}
+	template<> inline bool match<std::string>(lua_State *L, int idx)
+		{return lua_type(L, idx) == LUA_TSTRING;}
 
-	//////////////////////////////////////////////////////////////////////////
+	template<typename T>
+	inline T read(lua_State *L, int idx);
+	
+	template<typename T>
+	inline T read(state *L, int idx)
+		{return read<T>(L->cptr(), idx);}
+	
+	template<> inline bool			read<bool>(lua_State *L, int idx)
+		{return lua_toboolean(L, idx) != 0;}
+	template<> inline char			read<char>(lua_State *L, int idx)
+		{return static_cast<char>(lua_tonumber(L, idx));}
+	template<> inline unsigned char	read<unsigned char>(lua_State *L, int idx)
+		{return static_cast<unsigned char>(lua_tonumber(L, idx));}
+	template<> inline short			read<short>(lua_State *L, int idx)
+		{return static_cast<short>(lua_tonumber(L, idx));}
+	template<> inline unsigned short	read<unsigned short>(lua_State *L, int idx)
+		{return static_cast<unsigned short>(lua_tonumber(L, idx));}
+	template<> inline int			read<int>(lua_State *L, int idx)
+		{return static_cast<int>(lua_tonumber(L, idx));}
+	template<> inline unsigned int	read<unsigned int>(lua_State *L, int idx)
+		{return static_cast<unsigned int>(lua_tonumber(L, idx));}
+	template<> inline long			read<long>(lua_State *L, int idx)
+		{return static_cast<long>(lua_tonumber(L, idx));}
+	template<> inline unsigned long	read<unsigned long>(lua_State *L, int idx)
+		{return static_cast<unsigned long>(lua_tonumber(L, idx));}
+	template<> inline float			read<float>(lua_State *L, int idx)
+		{return static_cast<float>(lua_tonumber(L, idx));}
+	template<> inline double		read<double>(lua_State *L, int idx)
+		{return static_cast<double>(lua_tonumber(L, idx));}
+	template<> inline const char*	read<const char*>(lua_State *L, int idx)
+		{return static_cast<const char*>(lua_tostring(L, idx));}
+	template<> inline nil_t			read<nil_t>(lua_State */*L*/, int /*idx*/)
+		{return nil;}
+	template<> inline lua_CFunction	read<lua_CFunction>(lua_State *L, int idx)
+		{return static_cast<lua_CFunction>(lua_tocfunction(L, idx));}
+	template<> inline void*			read<void*>(lua_State *L, int idx)
+		{return static_cast<void*>(lua_touserdata(L, idx));}
+	template<> inline lua_State*	read<lua_State*>(lua_State *L, int /*idx*/)
+		{return L;}
+	template<> inline state*		read<state*>(lua_State *L, int /*idx*/)
+		{return state::from(L);}
 
-	#define luaL_argassert(arg, index) if (!match(type_matcher<P##arg>(), L, index)) \
-				luaL_argerror(L, index, "bad argument")
+	template<typename T> inline T check(lua_State *L, int idx)
+	{
+		if(!match<T>(L, idx))
+			luaL_argerror(L, idx, "bad argument");
+		return read<T>(L, idx);
+	}
+	template<typename T> inline T check(state *L, int idx)
+	{
+		return check<T>(L->cptr(), idx);
+	}
 
 	template<class RT>
 	struct result_matcher
@@ -132,10 +145,8 @@ namespace luastub
 		template <typename P1>
 		static inline int call(RT (*func)(P1), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			push(L, ret);
 			return 1;
@@ -145,12 +156,9 @@ namespace luastub
 		template <typename P1, typename P2>
 		static inline int call(RT (*func)(P1, P2), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			push(L, ret);
 			return 1;
@@ -160,14 +168,10 @@ namespace luastub
 		template <typename P1, typename P2, typename P3>
 		static inline int call(RT (*func)(P1, P2, P3), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			push(L, ret);
 			return 1;
@@ -177,16 +181,11 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4>
 		static inline int call(RT (*func)(P1, P2, P3, P4), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			push(L, ret);
 			return 1;
@@ -197,18 +196,12 @@ namespace luastub
 					typename P5>
 		static inline int call(RT (*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			push(L, ret);
 			return 1;
@@ -219,20 +212,13 @@ namespace luastub
 					typename P5, typename P6>
 		static inline int call(RT (*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			push(L, ret);
 			return 1;
@@ -243,22 +229,14 @@ namespace luastub
 					typename P5, typename P6, typename P7>
 		static inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			push(L, ret);
 			return 1;
@@ -269,88 +247,15 @@ namespace luastub
 					typename P5, typename P6, typename P7, typename P8>
 		static inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-
-		template <typename P1, typename P2, typename P3, typename P4,
-					typename P5, typename P6, typename P7, typename P8,
-					typename P9>
-		static inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-
-		template <typename P1, typename P2, typename P3, typename P4,
-					typename P5, typename P6, typename P7, typename P8,
-					typename P9, typename P10>
-		static inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			RT ret = func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			push(L, ret);
 			return 1;
@@ -379,10 +284,8 @@ namespace luastub
 		template <typename Callee, typename P1>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			push(L, ret);
 			return 1;
@@ -392,10 +295,8 @@ namespace luastub
 		template <typename Callee, typename P1>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			push(L, ret);
 			return 1;
@@ -405,12 +306,9 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			push(L, ret);
 			return 1;
@@ -419,12 +317,9 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			push(L, ret);
 			return 1;
@@ -433,14 +328,10 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			push(L, ret);
 			return 1;
@@ -449,14 +340,10 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			push(L, ret);
 			return 1;
@@ -466,16 +353,11 @@ namespace luastub
 					typename P4>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			push(L, ret);
 			return 1;
@@ -485,16 +367,11 @@ namespace luastub
 					typename P4>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			push(L, ret);
 			return 1;
@@ -504,18 +381,12 @@ namespace luastub
 					typename P4, typename P5>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			push(L, ret);
 			return 1;
@@ -525,18 +396,12 @@ namespace luastub
 					typename P4, typename P5>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			push(L, ret);
 			return 1;
@@ -546,20 +411,13 @@ namespace luastub
 					typename P4, typename P5, typename P6>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			push(L, ret);
 			return 1;
@@ -569,20 +427,13 @@ namespace luastub
 					typename P4, typename P5, typename P6>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			push(L, ret);
 			return 1;
@@ -592,22 +443,14 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			push(L, ret);
 			return 1;
@@ -617,22 +460,14 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			push(L, ret);
 			return 1;
@@ -642,24 +477,15 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7, typename P8>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			push(L, ret);
 			return 1;
@@ -669,148 +495,15 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7, typename P8>
 		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9>
-		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9>
-		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9, typename P10>
-		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
-			);
-			push(L, ret);
-			return 1;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9, typename P10>
-		static inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			RT ret = (callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			push(L, ret);
 			return 1;
@@ -832,10 +525,8 @@ namespace luastub
 		template <typename P1>
 		static inline int call(void (*func)(P1), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			return 0;
 		}
@@ -844,12 +535,9 @@ namespace luastub
 		template <typename P1, typename P2>
 		static inline int call(void (*func)(P1, P2), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			return 0;
 		}
@@ -858,14 +546,10 @@ namespace luastub
 		template <typename P1, typename P2, typename P3>
 		static inline int call(void (*func)(P1, P2, P3), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			return 0;
 		}
@@ -873,16 +557,11 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4>
 		static inline int call(void (*func)(P1, P2, P3, P4), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			return 0;
 		}
@@ -890,18 +569,12 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4, typename P5>
 		static inline int call(void (*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			return 0;
 		}
@@ -909,20 +582,13 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
 		static inline int call(void (*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			return 0;
 		}
@@ -930,22 +596,14 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 		static inline int call(void (*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			return 0;
 		}
@@ -953,82 +611,15 @@ namespace luastub
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 		static inline int call(void (*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
-			);
-			return 0;
-		}
-
-
-		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-		static inline int call(void (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			return 0;
-		}
-
-
-		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
-		static inline int call(void (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			func(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			return 0;
 		}
@@ -1055,10 +646,8 @@ namespace luastub
 		template <typename Callee, typename P1>
 		static inline int call(Callee &callee, void (Callee::*func)(P1), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			return 0;
 		}
@@ -1067,10 +656,8 @@ namespace luastub
 		template <typename Callee, typename P1>
 		static inline int call(Callee &callee, void (Callee::*func)(P1) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0)
+				check<P1>(L, index + 0)
 			);
 			return 0;
 		}
@@ -1078,26 +665,18 @@ namespace luastub
 
 		template <typename Callee, typename P1, typename P2>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			return 0;
 		}
 
 		template <typename Callee, typename P1, typename P2>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1)
 			);
 			return 0;
 		}
@@ -1105,14 +684,10 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			return 0;
 		}
@@ -1120,14 +695,10 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2)
 			);
 			return 0;
 		}
@@ -1135,17 +706,11 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3,
 					typename P4>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			return 0;
 		}
@@ -1153,17 +718,11 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3,
 					typename P4>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3)
 			);
 			return 0;
 		}
@@ -1172,18 +731,12 @@ namespace luastub
 					typename P4, typename P5>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			return 0;
 		}
@@ -1192,18 +745,12 @@ namespace luastub
 					typename P4, typename P5>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4)
 			);
 			return 0;
 		}
@@ -1211,21 +758,13 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3,
 					typename P4, typename P5, typename P6>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			return 0;
 		}
@@ -1233,21 +772,13 @@ namespace luastub
 		template <typename Callee, typename P1, typename P2, typename P3,
 					typename P4, typename P5, typename P6>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5)
+		{			(callee.*func)(
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5)
 			);
 			return 0;
 		}
@@ -1256,22 +787,14 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			return 0;
 		}
@@ -1280,22 +803,14 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6)
 			);
 			return 0;
 		}
@@ -1304,24 +819,15 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7, typename P8>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			return 0;
 		}
@@ -1330,144 +836,15 @@ namespace luastub
 					typename P4, typename P5, typename P6, typename P7, typename P8>
 		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8) const, lua_State *L, int index)
 		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-
 			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7)
-			);
-			return 0;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9>
-		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			return 0;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9>
-		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8)
-			);
-			return 0;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9, typename P10>
-		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
-			);
-			return 0;
-		}
-
-		template <typename Callee, typename P1, typename P2, typename P3,
-					typename P4, typename P5, typename P6, typename P7, typename P8,
-					typename P9, typename P10>
-		static inline int call(Callee &callee, void (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) const, lua_State *L, int index)
-		{
-			luaL_argassert(1, index + 0);
-			luaL_argassert(2, index + 1);
-			luaL_argassert(3, index + 2);
-			luaL_argassert(4, index + 3);
-			luaL_argassert(5, index + 4);
-			luaL_argassert(6, index + 5);
-			luaL_argassert(7, index + 6);
-			luaL_argassert(8, index + 7);
-			luaL_argassert(9, index + 8);
-			luaL_argassert(10, index + 9);
-
-			(callee.*func)(
-				get(type_matcher<P1>(), L, index + 0),
-				get(type_matcher<P2>(), L, index + 1),
-				get(type_matcher<P3>(), L, index + 2),
-				get(type_matcher<P4>(), L, index + 3),
-				get(type_matcher<P5>(), L, index + 4),
-				get(type_matcher<P6>(), L, index + 5),
-				get(type_matcher<P7>(), L, index + 6),
-				get(type_matcher<P8>(), L, index + 7),
-				get(type_matcher<P9>(), L, index + 8),
-				get(type_matcher<P10>(), L, index + 9)
+				check<P1>(L, index + 0),
+				check<P2>(L, index + 1),
+				check<P3>(L, index + 2),
+				check<P4>(L, index + 3),
+				check<P5>(L, index + 4),
+				check<P6>(L, index + 5),
+				check<P7>(L, index + 6),
+				check<P8>(L, index + 7)
 			);
 			return 0;
 		}
@@ -1519,16 +896,6 @@ namespace luastub
 
 	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8), lua_State *L, int index)
-		{return result_matcher<RT>::call(func, L, index);}
-
-
-	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{return result_matcher<RT>::call(func, L, index);}
-
-
-	template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
-	inline int call(RT (*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
 		{return result_matcher<RT>::call(func, L, index);}
 
 
@@ -1629,26 +996,6 @@ namespace luastub
 	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8) const, lua_State *L, int index)
 		{return result_matcher<RT>::call(callee, func, L, index);}
 
-
-	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9), lua_State *L, int index)
-		{return result_matcher<RT>::call(callee, func, L, index);}
-
-
-	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9) const, lua_State *L, int index)
-		{return result_matcher<RT>::call(callee, func, L, index);}
-
-
-	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
-	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), lua_State *L, int index)
-		{return result_matcher<RT>::call(callee, func, L, index);}
-
-
-	template <typename Callee, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9, typename P10>
-	inline int call(Callee &callee, RT (Callee::*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) const, lua_State *L, int index)
-		{return result_matcher<RT>::call(callee, func, L, index);}
-
 } // namespace luastub
 
 namespace luastub
@@ -1657,7 +1004,7 @@ namespace luastub
 	{
 		int type = lua_type(L, index);
 		if (type == LUA_TUSERDATA)
-			return *(void **)luaL_checkudata(L, index, tname);
+			return luaL_checkudata(L, index, tname);
 		else if (type == LUA_TTABLE) {
 			if (!lua_getmetatable(L, index))			/* does it have a metatable? */
 				luaL_typerror(L, index, tname);
@@ -1666,36 +1013,44 @@ namespace luastub
 				luaL_typerror(L, index, tname);
 			lua_pop(L, 2);
 			lua_pushstring(L, "__ptr");
-			lua_rawget(L, index);
+			lua_gettable(L, index);
 			if (!lua_isuserdata(L, -1))
-				luaL_error(L, "expected a table with a lightuserdata field called __ptr.");
+				luaL_error(L, "expected __ptr field");
+			lua_getregistry(L);
+			lua_pushvalue(L, -2);
+			lua_rawget(L, -2);
+			if (!lua_isuserdata(L, -1))
+				luaL_error(L, "__ptr (0x%p) has released", lua_touserdata(L, -3));
 			void *ptr = lua_touserdata(L, -1);
-			lua_pop(L, 1);
+			lua_pop(L, 3);
 			return ptr;
 		} else {
 			luaL_typerror(L, index, tname);
 		}
-
 		return NULL;
 	}
 	
-	inline void *getobject(lua_State *L)
+	inline void *getobject(lua_State *L, int index)
 	{
-		int type = lua_type(L, 1);
+		int type = lua_type(L, index);
 		if (type == LUA_TUSERDATA)
-			return *(void **)lua_touserdata(L, 1);
+			return lua_touserdata(L, index);
 		else if (type == LUA_TTABLE) {
 			lua_pushstring(L, "__ptr");
-			lua_rawget(L, 1);
+			lua_gettable(L, index);
 			if (!lua_isuserdata(L, -1))
-				luaL_error(L, "expected a table with a lightuserdata field called __ptr.");
+				luaL_error(L, "expected __ptr field");
+			lua_getregistry(L);
+			lua_pushvalue(L, -2);
+			lua_rawget(L, -2);
+			if (!lua_isuserdata(L, -1))
+				luaL_error(L, "__ptr (0x%p) has released", lua_touserdata(L, -3));
 			void *ptr = lua_touserdata(L, -1);
-			lua_pop(L, 1);
+			lua_pop(L, 3);
 			return ptr;
 		} else {
-			luaL_argerror(L, 1, "expected a userdata or a table with a lightuserdata field called __ptr");
+			luaL_argerror(L, index, "expected userdata or table with __ptr");
 		}
-
 		return NULL;
 	}
 
@@ -1760,7 +1115,7 @@ namespace luastub
 			typedef int (Callee::*Functor)(state*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Functor &func = *(Functor*)(buffer);
-			Callee &callee = *(Callee*)getobject(L);
+			Callee &callee = *(Callee*)getobject(L, 1);
 			return (callee.*func)(state::from(L));
 		}
 	};
@@ -1774,7 +1129,7 @@ namespace luastub
 			typedef int (Callee::*Functor)(lua_State*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Method &method = *(Method*)(buffer);
-			Callee &callee = *(Callee*)getobject(L);
+			Callee &callee = *(Callee*)getobject(L, 1);
 			return call(callee, method, L, 2);
 		}
 	};
@@ -1784,11 +1139,11 @@ namespace luastub
 													// t k v
 		lua_getmetatable(L, 1);						// t k v m
 		lua_pushstring(L, "__props");				// t k v m p
-		lua_rawget(L, -2);							// t k v m pt
+		lua_gettable(L, -2);						// t k v m pt
 		if (lua_istable(L, -1))
 		{
 			lua_pushvalue(L, 2);					// t k v m pt k
-			lua_rawget(L, -2);						// t k v m pt prop
+			lua_gettable(L, -2);					// t k v m pt prop
 			if (lua_isnil(L, -1))
 				luaL_error(L, "property '%s' is nil", lua_tostring(L, 2));
 
@@ -1810,24 +1165,24 @@ namespace luastub
 													// t v
 		lua_getmetatable(L, 1);						// t v m
 		lua_pushvalue(L, 2);						// t v m v
-		lua_rawget(L, -2);							// t v m lookup
+		lua_gettable(L, -2);						// t v m lookup
 		if (!lua_isnil(L, -1))
 			return 1;
 
 		lua_pop(L, 1);								// t v m
 		lua_pushstring(L, "__props");				// t k v m __props
-		lua_rawget(L, -2);							// t k v m pt
+		lua_gettable(L, -2);						// t k v m pt
 
 		if (lua_istable(L, -1))
 		{
 			lua_pushvalue(L, 2);					// t k v m pt k
-			lua_rawget(L, -2);						// t k v m pt prop
+			lua_gettable(L, -2);					// t k v m pt prop
 			if (lua_isnil(L, -1))
 				luaL_error(L, "property '%s' is nil", lua_tostring(L, 2));
 
 			lua_rawgeti(L, -1, 1);					// t k v m pt prop getf
 			if (lua_isnil(L, -1))
-				luaL_error(L, "attempt to read property '%s'", lua_tostring(L, 2));
+				luaL_error(L, "attempt to get property '%s'", lua_tostring(L, 2));
 			
 			lua_pushvalue(L, 1);					// t k v m pt prop getf t
 			lua_call(L, 1, 1);
@@ -1840,7 +1195,7 @@ namespace luastub
 	inline int property_support(lua_State *L, int index)
 	{
 		lua_pushstring(L, "__props");
-		lua_rawget(L, index);
+		lua_gettable(L, index);
 		if (lua_isnil(L, -1))
 		{
 			lua_pushstring(L, "__props");
@@ -1866,7 +1221,7 @@ namespace luastub
 		static inline int getter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			Callee* callee = (Callee*)getobject(L);
+			Callee* callee = (Callee*)getobject(L, 1);
 			push(L, *(Var*)((unsigned char*)callee + (unsigned int)offset));
 			return 1;
 		}
@@ -1874,10 +1229,10 @@ namespace luastub
 		static inline int setter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			Callee* callee = (Callee*)getobject(L);
-			if (!match(type_matcher<Var>(), L, 2))
+			Callee* callee = (Callee*)getobject(L, 1);
+			if (!match<Var>(L, 2))
 				luaL_argerror(L, 2, "bad argument");
-			*(Var*)((unsigned char*)callee + (unsigned int)offset) = get(type_matcher<Var>(), L, 2);
+			*(Var*)((unsigned char*)callee + (unsigned int)offset) = read<Var>(L, 2);
 			return 1;
 		}
 	};
@@ -1896,9 +1251,9 @@ namespace luastub
 		static inline int setter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			if (!match(type_matcher<Var>(), L, 2))
+			if (!match<Var>(L, 2))
 				luaL_argerror(L, 2, "bad argument");
-			*(Var*)offset = get(luastub::type_matcher<Var>(), L, 2);
+			*(Var*)offset = read<Var>(L, 2);
 			return 1;
 		}
 	};
