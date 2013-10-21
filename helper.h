@@ -1013,7 +1013,7 @@ namespace luastub
 				luaL_typerror(L, index, tname);
 			lua_pop(L, 2);
 			lua_pushstring(L, "__ptr");
-			lua_gettable(L, index);
+			lua_rawget(L, index);
 			if (!lua_isuserdata(L, -1))
 				luaL_error(L, "expected __ptr field");
 			lua_getregistry(L);
@@ -1037,7 +1037,7 @@ namespace luastub
 			return lua_touserdata(L, index);
 		else if (type == LUA_TTABLE) {
 			lua_pushstring(L, "__ptr");
-			lua_gettable(L, index);
+			lua_rawget(L, index);
 			if (!lua_isuserdata(L, -1))
 				luaL_error(L, "expected __ptr field");
 			lua_getregistry(L);
@@ -1195,7 +1195,7 @@ namespace luastub
 	inline int property_support(lua_State *L, int index)
 	{
 		lua_pushstring(L, "__props");
-		lua_gettable(L, index);
+		lua_rawget(L, index);
 		if (lua_isnil(L, -1))
 		{
 			lua_pushstring(L, "__props");

@@ -88,10 +88,10 @@ namespace luastub
 		{
 			state *L = m_metatable.getstate();
 			stack_protector sp(L);
-			cclass cl = query(L, name);
-			stack_object mt = L->newtable();
-			mt.set("__index", cl.m_metatable);
-			m_metatable.setmetatable(mt);
+			cclass base = query(L, name);
+			stack_object meta = L->newtable();
+			meta.set("__index", base.m_metatable);
+			m_metatable.setmetatable(meta);
 			return *this;
 		}
 		template<typename Func>
@@ -211,10 +211,6 @@ namespace luastub
 			state *L = m_metatable.getstate();
 			stack_object r = L->getregistry();
 			r.set(ptr, nil);
-		}
-		object &getmetatable()
-		{
-			return m_metatable;
 		}
 	private:
 		cclass(const stack_object &o) : m_metatable(o)

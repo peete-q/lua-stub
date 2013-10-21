@@ -501,6 +501,7 @@ namespace luastub
 	{
 		m_state->pushvalue(m_index);
 	}
+	
 	// registry_holder
 	inline registry_holder::registry_holder() : m_state(0), m_ref(LUA_REFNIL)
 	{

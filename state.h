@@ -149,7 +149,6 @@ namespace luastub
 		typedef void (*function_error_t)(const char *);
 		static function_error_t function_error_cb;
 	};
-	
 	class state_proxy
 	{
 	public:
