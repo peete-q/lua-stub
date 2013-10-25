@@ -48,7 +48,8 @@ namespace luastub
 		int isnone(int index) const;
 		int isnoneornil(int index) const;
 		int type(int index) const;
-		const char *tname(int type) const;
+		const char *typename_(int type) const;
+		const char *typename_of(int index) const;
 		
 		int equal(int index1, int index2) const;
 		int rawequal(int index1, int index2) const;
@@ -113,7 +114,7 @@ namespace luastub
 		void concat(int n);
 		void pop(int n);
 		
-		void registers(const char *libname, const luaL_Reg *l);
+		void openlib(const char *libname, const luaL_Reg *l);
 		int getmetafield(int obj, const char *e);
 		int callmeta(int obj, const char *e);
 		int typerror(int narg, const char* tname);
@@ -149,6 +150,7 @@ namespace luastub
 		typedef void (*function_error_t)(const char *);
 		static function_error_t function_error_cb;
 	};
+	
 	class state_proxy
 	{
 	public:

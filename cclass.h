@@ -61,36 +61,48 @@ namespace luastub
 	class cclass
 	{
 	public:
-		struct e_metatable_already_exist
-		{
-		};
+		struct e_name_already_exist {};
+		struct e_type_already_exist {};
 	public:
-		static cclass query(state *L, const char *name)
+		cclass(state *L)
 		{
-			L->pushstring(name);
-			return cclass(L->gettable(LUA_REGISTRYINDEX));
+			const char *name = cclass_manager::instance()->get<T>();
+			if (name)
+			{
+				stack_protector sp(L);
+				L->pushstring(name);
+				m_metatable = L->gettable(LUA_REGISTRYINDEX);
+			}
 		}
-		
-		template<typename Constructor>
-		cclass(state *L, const char *name, Constructor)
+		bool valid() const
 		{
+			return m_metatable.valid();
+		}
+		template<typename Constructor>
+		cclass(state *L, const char* name, Constructor = ctor<void>())
+		{
+			if (cclass_manager::instance()->get<T>())
+				throw e_type_already_exist();
 			stack_protector sp(L);
-			stack_object g = L->getglobals();
+			stack_object _G = L->getglobals();
 			if (!L->newmetatable(name))
-				throw e_metatable_already_exist();
+				throw e_name_already_exist();
 			m_metatable = L->getstack(-1);
-			g.def(name, &__ctor<Constructor>, 1);
+			_G.def(name, &__ctor<Constructor>, 1);
 			L->pushstring(name);
 			m_metatable.def("__gc", &__gc, 1);
+			L->pushstring(name);
+			m_metatable.def("__tostring", &__tostring, 1);
 			m_metatable.set("__index", m_metatable);
+			cclass_manager::instance()->add<T>(name);
 		}
 		cclass &inherit(const char *name)
 		{
 			state *L = m_metatable.getstate();
 			stack_protector sp(L);
-			cclass base = query(L, name);
+			stack_object R = L->getregistry();
 			stack_object meta = L->newtable();
-			meta.set("__index", base.m_metatable);
+			meta.set("__index", R.get(name));
 			m_metatable.setmetatable(meta);
 			return *this;
 		}
@@ -160,6 +172,14 @@ namespace luastub
 			o.setmetatable(m_metatable);
 			return o;
 		}
+		stack_object newobject(const T &value)
+		{
+			state *L = m_metatable.getstate();
+			T *ptr = new (L->newuserdata(sizeof(T))) T(value);
+			stack_object o(L, -1);
+			o.setmetatable(m_metatable);
+			return o;
+		}
 		template<typename P1>
 		stack_object newobject(P1 p1)
 		{
@@ -199,23 +219,37 @@ namespace luastub
 		stack_object boxptr(T* ptr)
 		{
 			state *L = m_metatable.getstate();
-			stack_object o = L->newtable();
-			o.set("__ptr", ptr);
+			stack_object R = L->getregistry();
+			stack_object o = R.get(lightuserdata<T>(ptr));
+			if (o != nil)
+			{
+				R.pop();
+				return o;
+			}
+			o.pop();
+			o = L->newtable();
+			o.set("__ptr", lightuserdata<T>(ptr));
 			o.setmetatable(m_metatable);
-			stack_object r = L->getregistry();
-			r.set(ptr, ptr);
+			R.set(lightuserdata<T>(ptr), o);
+			R.pop();
 			return o;
 		}
 		void unboxptr(T* ptr)
 		{
 			state *L = m_metatable.getstate();
-			stack_object r = L->getregistry();
-			r.set(ptr, nil);
+			stack_protector sp(L);
+			stack_object R = L->getregistry();
+			stack_object o = R.get(lightuserdata<T>(ptr));
+			if (o != nil)
+			{
+				o.set("__ptr", false);
+				R.set(lightuserdata<T>(ptr), nil);
+			}
 		}
 	private:
-		cclass(const stack_object &o) : m_metatable(o)
-		{
-		}
+		cclass() {}
+		cclass(const stack_object &o) : m_metatable(o) {}
+		
 		template<typename Constructor>
 		static int __ctor(state *L)
 		{
@@ -223,7 +257,7 @@ namespace luastub
 			stack_object mt = L->upvalue(2);
 			T *(*ctor)(state*) = &Constructor::construct;
 			T *ptr = (*ctor)(L);
-			stack_object o(mt.getstate(), -1);
+			stack_object o = L->getstack(-1);
 			o.setmetatable(mt);
 			return 1;
 		}
@@ -233,6 +267,12 @@ namespace luastub
 			if (T *ptr = (T*)L->checkudata(1, name.tostring()))
 				ptr->~T();
 			return 0;
+		}
+		static int __tostring(state *L)
+		{
+			stack_object name = L->upvalue(2);
+			L->pushfstring("object{cclass:%s} (%s: %p)", name.tostring(), L->typename_of(1), L->topointer(1));
+			return 1;
 		}
 	private:
 		object m_metatable;

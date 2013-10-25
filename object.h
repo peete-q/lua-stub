@@ -24,6 +24,7 @@ namespace luastub
 		stack_holder();
 		stack_holder(state *state, int index);
 		void push() const;
+		void pop() const;
 	private:
 		friend class stack_indexer;
 		friend class registry_holder;
@@ -52,6 +53,7 @@ namespace luastub
 		registry_holder &operator =(const registry_holder &other);
 		void bind(state *state, int index);
 		void push() const;
+		void release();
 	private:
 		friend class indexer;
 		state *m_state;
@@ -66,7 +68,7 @@ namespace luastub
 		typedef typename holder::indexer indexer_t;
 		typedef holder holder_t;
 	public:
-		basic_object() : m_state(0)
+		basic_object() : m_state(NULL)
 		{
 		}
 		basic_object(state *state, int index) : m_state(state), m_holder(state, index)
@@ -78,11 +80,16 @@ namespace luastub
 		}
 		lua_State *getcstate() const
 		{
-			return m_state ? m_state->cptr() : 0;
+			return m_state ? m_state->cptr() : NULL;
 		}
 		void push() const
 		{
+			assert(m_state);
 			m_holder.push();
+		}
+		bool valid() const
+		{
+			return m_state != NULL;
 		}
 		bool isnumber() const
 		{
@@ -204,7 +211,7 @@ namespace luastub
 			return m_state->topointer(index);
 		}
 		template<typename T>
-		T *toany() const
+		T *to() const
 		{
 			return (T*)touserdata();
 		}
@@ -217,12 +224,34 @@ namespace luastub
 			luastub::push(m_state->cptr(), value);
 			m_state->settable(index);
 		}
+		template<typename K, typename V>
+		void rawset(K key, V value)
+		{
+			indexer_t index(m_holder);
+			luastub::push(m_state->cptr(), key);
+			luastub::push(m_state->cptr(), value);
+			m_state->rawset(index);
+		}
 		template<typename T>
 		void setmetatable(const T &value) const
 		{
 			indexer_t index(m_holder);
 			value.push();
 			m_state->setmetatable(index);
+		}
+		template<typename T>
+		bool operator !=(T value) const
+		{
+			return !(*this == value);
+		}
+		bool operator ==(const nil_t&) const
+		{
+			return !valid() || isnil();
+		}
+		bool operator ==(const char *value) const
+		{
+			indexer_t index(m_holder);
+			return isstring() && strcmp(tostring(), value) == 0;
 		}
 		template<typename T>
 		bool operator ==(T value) const
@@ -233,9 +262,13 @@ namespace luastub
 		template<typename T>
 		bool operator ==(const basic_object<T> &value) const
 		{
-			indexer_t index(m_holder);
-			typename basic_object<T>::indexer_t index2(value.m_holer);
-			return m_state->equal(index, index2);
+			if (valid() && value.valid())
+			{
+				indexer_t index(m_holder);
+				typename basic_object<T>::indexer_t index2(value.m_holer);
+				return m_state->equal(index, index2);
+			}
+			return !valid() && !value.valid();
 		}
 		
 		// get
@@ -245,6 +278,14 @@ namespace luastub
 			indexer_t index(m_holder);
 			luastub::push(m_state->cptr(), key);
 			m_state->gettable(index);
+			return basic_object(m_state, m_state->gettop());
+		}
+		template<typename K>
+		basic_object rawget(K key) const
+		{
+			indexer_t index(m_holder);
+			luastub::push(m_state->cptr(), key);
+			m_state->rawget(index);
 			return basic_object(m_state, m_state->gettop());
 		}
 		template<typename K>
@@ -393,6 +434,10 @@ namespace luastub
 			m_state = o.m_state;
 			m_holder = o.m_holder;
 		}
+		void pop() const
+		{
+			m_holder.pop();
+		}
 	private:
 		stack_object(const basic_object<registry_holder> &o);
 	};
@@ -424,7 +469,7 @@ namespace luastub
 			m_holder = o.m_holder;
 		}
 	};
-	
+
 	class table_iterator
 	{
 	public:
@@ -451,8 +496,7 @@ namespace luastub
 				m_state->settop(m_index + 1);
 				if (m_state->next(m_index))
 					return true;
-				else
-					m_index = 0;
+				m_index = 0;
 			}
 			return false;
 		}
@@ -491,7 +535,7 @@ namespace luastub
 	};
 
 	// stack_holder
-	inline stack_holder::stack_holder() : m_state(0), m_index(0)
+	inline stack_holder::stack_holder() : m_state(NULL), m_index(0)
 	{
 	}
 	inline stack_holder::stack_holder(state *state, int index) : m_state(state), m_index(state->absindex(index))
@@ -501,9 +545,13 @@ namespace luastub
 	{
 		m_state->pushvalue(m_index);
 	}
+	inline void stack_holder::pop() const
+	{
+		m_state->remove(m_index);
+	}
 	
 	// registry_holder
-	inline registry_holder::registry_holder() : m_state(0), m_ref(LUA_REFNIL)
+	inline registry_holder::registry_holder() : m_state(NULL), m_refcount(NULL), m_ref(LUA_REFNIL)
 	{
 	}
 	inline registry_holder::registry_holder(state *state, int index)
@@ -512,21 +560,17 @@ namespace luastub
 	}
 	inline registry_holder::~registry_holder()
 	{
-		if (m_refcount && --(*m_refcount) == 0)
-		{
-			delete m_refcount;
-			m_state->unref(LUA_REGISTRYINDEX, m_ref);
-			m_refcount = 0;
-			m_state = 0;
-		}
+		release();
 	}
 	inline registry_holder &registry_holder::operator =(const stack_holder &other)
 	{
+		release();
 		bind(other.m_state, other.m_index);
 		return *this;
 	}
 	inline registry_holder &registry_holder::operator =(const registry_holder &other)
 	{
+		release();
 		m_state = other.m_state;
 		m_ref = other.m_ref;
 		m_refcount = other.m_refcount;
@@ -545,12 +589,56 @@ namespace luastub
 	inline void registry_holder::push() const
 	{
 		m_state->rawgeti(LUA_REGISTRYINDEX, m_ref);
-		m_state->gettop();
+	}
+	inline void registry_holder::release()
+	{
+		if (m_refcount && --(*m_refcount) == 0)
+		{
+			delete m_refcount;
+			m_state->unref(LUA_REGISTRYINDEX, m_ref);
+			m_refcount = NULL;
+			m_state = NULL;
+			m_ref = LUA_REFNIL;
+		}
 	}
 	registry_holder::indexer::indexer(const registry_holder &o) : m_state(o.m_state)
 	{
 		m_state->rawgeti(LUA_REGISTRYINDEX, o.m_ref);
 		m_index = m_state->gettop();
 	}
+	
+	//
+	template<>
+	struct any_type <stack_object>
+	{
+		static void push(lua_State *L, const stack_object &value)
+		{
+			value.push();
+		}
+		static bool match(lua_State *L, int idx)
+		{
+			return true;
+		}
+		static stack_object read(lua_State *L, int idx)
+		{
+			return stack_object(state::from(L), idx);
+		}
+	};
+	template<>
+	struct any_type <object>
+	{
+		static void push(lua_State *L, const object &value)
+		{
+			value.push();
+		}
+		static bool match(lua_State *L, int idx)
+		{
+			return true;
+		}
+		static object read(lua_State *L, int idx)
+		{
+			return object(state::from(L), idx);
+		}
+	};
 }
 #endif

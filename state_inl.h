@@ -30,7 +30,8 @@ namespace luastub
 	inline int state::isnone(int index) const {return lua_isnone(cptr(), index);}
 	inline int state::isnoneornil(int index) const {return lua_isnoneornil(cptr(), index);}
 	inline int state::type(int index) const {return lua_type(cptr(), index);}
-	inline const char *state::tname(int type) const {return lua_typename(cptr(), type);}
+	inline const char *state::typename_(int type) const {return lua_typename(cptr(), type);}
+	inline const char *state::typename_of(int index) const {return luaL_typename(cptr(), index);}
 		
 	inline int state::equal(int index1, int index2) const {return lua_equal(cptr(), index1, index2);}
 	inline int state::rawequal(int index1, int index2) const {return lua_rawequal(cptr(), index1, index2);}
@@ -100,7 +101,7 @@ namespace luastub
 	inline void state::concat(int n) {lua_concat(cptr(), n);}
 	inline void state::pop(int n) {lua_pop(cptr(), n);}
 		
-	inline void state::registers(const char *libname, const luaL_Reg *l) {luaL_register(cptr(), libname, l);}
+	inline void state::openlib(const char *libname, const luaL_Reg *l) {luaL_register(cptr(), libname, l);}
 	inline int state::getmetafield(int obj, const char *e) {return luaL_getmetafield(cptr(), obj, e);}
 	inline int state::callmeta(int obj, const char *e) {return luaL_callmeta(cptr(), obj, e);}
 	inline int state::typerror(int narg, const char* tname) {return luaL_typerror(cptr(), narg, tname);}
