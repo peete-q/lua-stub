@@ -1,7 +1,7 @@
 #ifndef __LUASTUB_FUNCTION_H__
 #define __LUASTUB_FUNCTION_H__
 
-#include "helper.h"
+#include "object.h"
 
 namespace luastub {
 

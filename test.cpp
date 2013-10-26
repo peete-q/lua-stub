@@ -87,7 +87,7 @@ int main()
 		"print('[p]',p, p.x, p.y, p.n)						"
 	);
 	if (err)
-		puts(L->getstack(-1).tostring());
+		puts(L->getstack(-1)->tostring());
 	
 	c.unboxptr(&pt);
 	err = L->dostring(
@@ -96,7 +96,7 @@ int main()
 		"fun()												"
 	);
 	if (err)
-		puts(L->getstack(-1).tostring());
+		puts(L->getstack(-1)->tostring());
 	print(true, false, luastub::nil, n);
 	print("---- test end ----");
 	return 1;

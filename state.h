@@ -9,153 +9,180 @@ extern "C"
 #include "lualib.h"
 }
 
-#define LUASTUB_VERSION			"luastub 1.0 beta"
-#define LUASTUB_VERSION_NUM		100
+#define LUASTUB_VERSION			"luastub 1.1"
+#define LUASTUB_VERSION_NUM		110
 #define LUASTUB_AUTHORS 		"Peete.Q"
 
 namespace luastub
 {
+	class state;
+	class stack_object;
+	
 	const class nil_t {} nil;
 	
-	class stack_object;
+	class stack_ref
+	{
+	public:
+		stack_ref(state *state, int index) : m_state(state), m_index(index) {}
+		stack_object *operator ->() {return (stack_object*)this;}
+		state *m_state;
+		int m_index;
+	};
 	
 	class state
 	{
 	public:
-		static state *open();
-		static state *from(lua_State *L);
-		static void close(state *self);
+		static inline state *open() {return (state*)lua_open();}
+		static inline state *from(lua_State *L) {return (state*)(L);}
 		
-		int gettop() const;
-		void settop(int index);
-		void pushvalue(int index);
-		void remove(int index);
-		void insert(int index);
-		void replace(int index);
-		void xmove(state *to, int n);
-		int checkstack(int size) const;
+		inline void close() {lua_close(cptr());}
+		inline lua_State *cptr() const {return (lua_State*)this;}
 		
-		int isnumber(int index) const;
-		int isstring(int index) const;
-		int iscfunction(int index) const;
-		int isuserdata(int index) const;
-		int isfunction(int index) const;
-		int istable(int index) const;
-		int islightuserdata(int index) const;
-		int isnil(int index) const;
-		int isboolean(int index) const;
-		int isthread(int index) const;
-		int isnone(int index) const;
-		int isnoneornil(int index) const;
-		int type(int index) const;
-		const char *typename_(int type) const;
-		const char *typename_of(int index) const;
+		inline int gettop() const {return lua_gettop(cptr());}
+		inline void settop(int index) {lua_settop(cptr(), index);}
+		inline void pushvalue(int index) {lua_pushvalue(cptr(), index);}
+		inline void remove(int index) {lua_remove(cptr(), index);}
+		inline void insert(int index) {lua_insert(cptr(), index);}
+		inline void replace(int index) {lua_replace(cptr(), index);}
+		inline void xmove(state *to, int n) {lua_xmove(cptr(), to->cptr(), n);}
+		inline int checkstack(int size) const {return lua_checkstack(cptr(), size);}
+			
+		inline int isnumber(int index) const {return lua_isnumber(cptr(), index);}
+		inline int isstring(int index) const {return lua_isstring(cptr(), index);}
+		inline int iscfunction(int index) const {return lua_iscfunction(cptr(), index);}
+		inline int isuserdata(int index) const {return lua_isuserdata(cptr(), index);}
+		inline int isfunction(int index) const {return lua_isfunction(cptr(), index);}
+		inline int istable(int index) const {return lua_istable(cptr(), index);}
+		inline int islightuserdata(int index) const {return lua_islightuserdata(cptr(), index);}
+		inline int isnil(int index) const {return lua_isnil(cptr(), index);}
+		inline int isboolean(int index) const {return lua_isboolean(cptr(), index);}
+		inline int isthread(int index) const {return lua_isthread(cptr(), index);}
+		inline int isnone(int index) const {return lua_isnone(cptr(), index);}
+		inline int isnoneornil(int index) const {return lua_isnoneornil(cptr(), index);}
+		inline int type(int index) const {return lua_type(cptr(), index);}
+		inline const char *typename_(int type) const {return lua_typename(cptr(), type);}
+		inline const char *typename_of(int index) const {return luaL_typename(cptr(), index);}
+			
+		inline int equal(int index1, int index2) const {return lua_equal(cptr(), index1, index2);}
+		inline int rawequal(int index1, int index2) const {return lua_rawequal(cptr(), index1, index2);}
+			
+		inline lua_Number tonumber(int index) const {return lua_tonumber(cptr(), index);}
+		inline lua_Integer tointeger(int index) const {return lua_tointeger(cptr(), index);}
+		inline int toboolean(int index) const {return lua_toboolean(cptr(), index);}
+		inline const char *tolstring(int index, size_t *len) const {return lua_tolstring(cptr(), index, len);}
+		inline const char *tostring(int index) const {return lua_tostring(cptr(), index);}
+		inline size_t objlen(int index) const {return lua_objlen(cptr(), index);}
+		inline lua_CFunction tocfunction(int index) const {return lua_tocfunction(cptr(), index);}
+		inline void *touserdata(int index) const {return lua_touserdata(cptr(), index);}
+		inline lua_State *tothread(int index) const {return lua_tothread(cptr(), index);}
+		inline const void *topointer(int index) const {return lua_topointer(cptr(), index);}
+			
+		inline stack_ref pushnil() {lua_pushnil(cptr()); return stack_ref(this, gettop());}
+		inline stack_ref pushnumber(lua_Number n) {lua_pushnumber(cptr(), n); return stack_ref(this, gettop());}
+		inline stack_ref pushinteger(int n) {lua_pushinteger(cptr(), n); return stack_ref(this, gettop());}
+		inline stack_ref pushlstring(const char *s, size_t len) {lua_pushlstring(cptr(), s, len); return stack_ref(this, gettop());}
+		inline stack_ref pushstring(const char *s) {lua_pushstring(cptr(), s); return stack_ref(this, gettop());}
+		inline stack_ref pushvfstring(const char *fmt, va_list args) {lua_pushvfstring(cptr(), fmt, args); return stack_ref(this, gettop());}
+		inline stack_ref pushfstring(const char *fmt, ...) {
+			va_list args;
+			va_start(args, fmt);
+			lua_pushvfstring(cptr(), fmt, args);
+			va_end(args);
+			return stack_ref(this, gettop());
+		}
+		inline stack_ref pushcclosure(lua_CFunction fn, int n) {lua_pushcclosure(cptr(), fn, n); return stack_ref(this, gettop());}
+		inline stack_ref pushcfunction(lua_CFunction f) {lua_pushcfunction(cptr(), f); return stack_ref(this, gettop());}
+		inline stack_ref pushboolean(bool value) {lua_pushboolean(cptr(), value); return stack_ref(this, gettop());}
+		inline stack_ref pushlightuserdata(void *ptr) {lua_pushlightuserdata(cptr(), ptr); return stack_ref(this, gettop());}
+		inline stack_ref pushthread() {lua_pushthread(cptr()); return stack_ref(this, gettop());}
+			
+		inline stack_ref getglobals() {pushvalue(LUA_GLOBALSINDEX); return stack_ref(this, gettop());}
+		inline stack_ref getglobal(const char *var) {getfield(LUA_GLOBALSINDEX, var); return stack_ref(this, gettop());}
+		inline stack_ref getstack(int index) {return stack_ref(this, index);}
+		inline stack_ref getregistry() {lua_getregistry(cptr()); return stack_ref(this, gettop());}
 		
-		int equal(int index1, int index2) const;
-		int rawequal(int index1, int index2) const;
-		int compare(int index1, int index2, int op) const;
+		inline stack_ref gettable(int index) {lua_gettable(cptr(), index); return stack_ref(this, gettop());}
+		inline stack_ref getfield(int index, const char *key) {lua_getfield(cptr(), index, key); return stack_ref(this, gettop());}
+		inline stack_ref rawget(int index) {lua_rawget(cptr(), index); return stack_ref(this, gettop());}
+		inline stack_ref rawgeti(int index, int n) {lua_rawgeti(cptr(), index, n); return stack_ref(this, gettop());}
+		inline stack_ref createtable(int narr, int nrec) {lua_createtable(cptr(), narr, nrec); return stack_ref(this, gettop());}
+		inline stack_ref getmetatable(int objindex) {lua_getmetatable(cptr(), objindex); return stack_ref(this, gettop());}
+		inline stack_ref newtable() {lua_newtable(cptr()); return stack_ref(this, gettop());}
+		inline stack_ref upvalue(int n) {return stack_ref(this, lua_upvalueindex(n));}
+		inline void *newuserdata(size_t size) {return lua_newuserdata(cptr(), size);}
+			
+		inline void settable(int index) {lua_settable(cptr(), index);}
+		inline void setfield(int index, const char *key) {lua_setfield(cptr(), index, key);}
+		inline void rawset(int index) {lua_rawset(cptr(), index);}
+		inline void rawseti(int index, int n) {lua_rawseti(cptr(), index, n);}
+		inline void setmetatable(int index) {lua_setmetatable(cptr(), index);}
+			
+		inline void call(int nargs, int nresults) {lua_call(cptr(), nargs, nresults);}
+		inline int pcall(int nargs, int nresults, int errfunc) {return lua_pcall(cptr(), nargs, nresults, errfunc);}
+		inline int load(lua_Reader reader, void *data, const char *chunkname) {return lua_load(cptr(), reader, data, chunkname);}
+			
+		inline int yield(int nresults) {return lua_yield(cptr(), nresults);}
+		inline int resume(int nargs) {return lua_resume(cptr(), nargs);}
+		inline int status() {return lua_status(cptr());}
+			
+		inline int gc(int what, int data) {return lua_gc(cptr(), what, data);}
+		inline int error() {return lua_error(cptr());}
+		inline int next(int index) {return lua_next(cptr(), index);}
+		inline void concat(int n) {lua_concat(cptr(), n);}
+		inline void pop(int n) {lua_pop(cptr(), n);}
+			
+		inline void openlib(const char *libname, const luaL_Reg *l) {luaL_register(cptr(), libname, l);}
+		inline int getmetafield(int obj, const char *e) {return luaL_getmetafield(cptr(), obj, e);}
+		inline int callmeta(int obj, const char *e) {return luaL_callmeta(cptr(), obj, e);}
+		inline int typerror(int narg, const char* tname) {return luaL_typerror(cptr(), narg, tname);}
+		inline int argerror(int narg, const char *extramsg) {return luaL_argerror(cptr(), narg, extramsg);}
+			
+		inline const char *checklstring(int narg, size_t *l) const {return luaL_checklstring(cptr(), narg, l);}
+		inline const char *optlstring(int narg, const char *def, size_t *l) const {return luaL_optlstring(cptr(), narg, def, l);}
+		inline lua_Number checknumber(int narg) const {return luaL_checknumber(cptr(), narg);}
+		inline lua_Number optnumber(int narg, lua_Number def) const {return luaL_optnumber(cptr(), narg, def);}
+		inline lua_Integer checkinteger(int narg) const {return luaL_checkinteger(cptr(), narg);}
+		inline lua_Integer optinteger(int narg, lua_Integer def) const {return luaL_optinteger(cptr(), narg, def);}
+		inline void checkstack(int sz, const char *msg) {luaL_checkstack(cptr(), sz, msg);}
+		inline void checktype(int narg, int t) {luaL_checktype(cptr(), narg, t);}
+		inline void checkany(int narg) {luaL_checkany(cptr(), narg);}
+		inline int newmetatable(const char *tname) {return luaL_newmetatable(cptr(), tname);}
+		inline void *checkudata(int ud, const char *tname) {return luaL_checkudata(cptr(), ud, tname);}
+		inline void where(int lvl) {luaL_where(cptr(), lvl);}
+		inline int error(const char *fmt, ...)
+		{
+			va_list args;
+			va_start(args, fmt);
+			luaL_where(cptr(), 1);
+			lua_pushvfstring(cptr(), fmt, args);
+			va_end(args);
+			lua_concat(cptr(), 2);
+			return lua_error(cptr());
+		}
+		inline int ref(int t) {return luaL_ref(cptr(), t);}
+		inline void unref(int t, int ref) {luaL_unref(cptr(), t, ref);}
 		
-		lua_Number tonumber(int index) const;
-		lua_Integer tointeger(int index) const;
-		int toboolean(int index) const;
-		const char *tolstring(int index, size_t *len) const;
-		const char *tostring(int index) const;
-		size_t objlen(int index) const;
-		lua_CFunction tocfunction(int index) const;
-		void *touserdata(int index) const;
-		lua_State *tothread(int index) const;
-		const void *topointer(int index) const;
+		inline int loadfile(const char *filename) {return luaL_loadfile(cptr(), filename);}
+		inline int loadbuffer(const char *buff, size_t sz, const char *name) {return luaL_loadbuffer(cptr(), buff, sz, name);}
+		inline int loadstring(const char *s) {return luaL_loadstring(cptr(), s);}
+		inline int dofile(const char *filename) {return luaL_loadfile(cptr(), filename) || lua_pcall(cptr(), 0, LUA_MULTRET, 0);}
+		inline int dobuffer(const char *buff, size_t sz, const char *name) {return luaL_loadbuffer(cptr(), buff, sz, name) || lua_pcall(cptr(), 0, LUA_MULTRET, 0);}
+		inline int dostring(const char *s) {return luaL_loadstring(cptr(), s) || lua_pcall(cptr(), 0, LUA_MULTRET, 0);}
+		inline void openlibs() {luaL_openlibs(cptr());}
 		
-		stack_object pushnil();
-		stack_object pushnumber(lua_Number n);
-		stack_object pushinteger(int n);
-		stack_object pushlstring(const char *s, size_t len);
-		stack_object pushstring(const char *s);
-		stack_object pushvfstring(const char *fmt, va_list args);
-		stack_object pushfstring(const char *fmt, ...);
-		stack_object pushcclosure(lua_CFunction fn, int n);
-		stack_object pushcfunction(lua_CFunction f);
-		stack_object pushboolean(bool value);
-		stack_object pushlightuserdata(void *ptr);
-		stack_object pushthread();
-		
-		stack_object getglobals();
-		stack_object getglobal(const char *var);
-		stack_object getstack(int index);
-		stack_object getregistry();
-		
-		stack_object gettable(int index);
-		stack_object getfield(int index, const char *key);
-		stack_object rawget(int index);
-		stack_object rawgeti(int index, int n);
-		stack_object createtable(int narr, int nrec);
-		stack_object getmetatable(int objindex);
-		stack_object newtable();
-		stack_object upvalue(int n);
-		void *newuserdata(size_t size);
-		
-		void settable(int index);
-		void setfield(int index, const char *key);
-		void rawset(int index);
-		void rawseti(int index, int n);
-		void setmetatable(int index);
-		
-		void call(int nargs, int nresults);
-		int pcall(int nargs, int nresults, int errfunc);
-		int load(lua_Reader reader, void *data, const char *chunkname);
-		
-		int yield(int nresults);
-		int resume(int nargs);
-		int status();
-		
-		int gc(int what, int data);
-		int error();
-		int next(int index);
-		void concat(int n);
-		void pop(int n);
-		
-		void openlib(const char *libname, const luaL_Reg *l);
-		int getmetafield(int obj, const char *e);
-		int callmeta(int obj, const char *e);
-		int typerror(int narg, const char* tname);
-		int argerror(int narg, const char *extramsg);
-		
-		const char *checklstring(int narg, size_t *l) const;
-		const char *optlstring(int narg, const char *def, size_t *l) const;
-		lua_Number checknumber(int narg) const;
-		lua_Number optnumber(int narg, lua_Number def) const;
-		lua_Integer checkinteger(int narg) const;
-		lua_Integer optinteger(int narg, lua_Integer def) const;
-		void checkstack(int sz, const char *msg);
-		void checktype(int narg, int t);
-		void checkany(int narg);
-		int newmetatable(const char *tname);
-		void *checkudata(int narg, const char *tname);
-		void where(int lvl);
-		int error(const char *fmt, ...);
-		int ref(int t);
-		void unref(int t, int ref);
-		
-		int loadfile(const char *filename);
-		int loadbuffer(const char *buff, size_t sz, const char *name);
-		int loadstring(const char *s);
-		int dofile(const char *filename);
-		int dobuffer(const char *buff, size_t sz, const char *name);
-		int dostring(const char *s);
-		void openlibs();
-
-		int absindex(int index);
-		lua_State *cptr() const;
+		inline int absindex(int i) {return i > 0 || i < LUA_REGISTRYINDEX ? i : gettop() + i + 1;}
 		
 		typedef void (*function_error_t)(const char *);
 		static function_error_t function_error_cb;
 	};
+	inline void print_error(const char *s) {puts(s);}
+	state::function_error_t state::function_error_cb = &print_error;
 	
 	class state_proxy
 	{
 	public:
 		state_proxy() {m_state = state::open();}
-		~state_proxy() {state::close(m_state);}
+		~state_proxy() {m_state->close();}
 		state *operator ->() {return m_state;}
 		operator state *() {return m_state;}
 	private:
@@ -177,5 +204,4 @@ namespace luastub
 	};
 	
 }
-#include "state_inl.h"
 #endif
