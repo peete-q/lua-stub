@@ -131,7 +131,7 @@ namespace luastub
 		inline void concat(int n) {lua_concat(cptr(), n);}
 		inline void pop(int n) {lua_pop(cptr(), n);}
 			
-		inline void openlib(const char *libname, const luaL_Reg *l) {luaL_register(cptr(), libname, l);}
+		inline void register_(const char *libname, const luaL_Reg *l) {luaL_register(cptr(), libname, l);}
 		inline int getmetafield(int obj, const char *e) {return luaL_getmetafield(cptr(), obj, e);}
 		inline int callmeta(int obj, const char *e) {return luaL_callmeta(cptr(), obj, e);}
 		inline int typerror(int narg, const char* tname) {return luaL_typerror(cptr(), narg, tname);}
@@ -197,7 +197,7 @@ namespace luastub
 	public:
 		stack_protector(state *state) : m_state(state), m_top(state->gettop()) {}
 		~stack_protector() {restore();}
-		void restore() {if (m_top) m_state->settop(m_top), m_top = 0;}
+		void restore() {if (m_state) m_state->settop(m_top), m_state = NULL;}
 	private:
 		state *m_state;
 		int m_top;

@@ -91,7 +91,7 @@ int main()
 	
 	c.unboxptr(&pt);
 	err = L->dostring(
-		"print('[p.__ptr]', p.__ptr)										"
+		"print('[p.__ptr]', p.__ptr)						"
 		"function fun() p.x = 1000	end						"
 		"fun()												"
 	);

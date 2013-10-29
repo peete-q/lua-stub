@@ -2,8 +2,8 @@
 #ifndef __LUASTUB_OBJECT_H__
 #define __LUASTUB_OBJECT_H__
 
-#include "assert.h"
-#include "string.h"
+#include <assert.h>
+
 #include "state.h"
 #include "helper.h"
 
@@ -52,7 +52,7 @@ namespace luastub
 		inline registry_holder() : m_state(NULL), m_refcount(NULL), m_ref(LUA_REFNIL)
 		{
 		}
-		inline registry_holder(state *state, int index)
+		inline registry_holder(state *state, int index) : m_state(NULL), m_refcount(NULL), m_ref(LUA_REFNIL)
 		{
 			bind(state, index);
 		}
@@ -66,11 +66,30 @@ namespace luastub
 		}
 		inline void bind(state *state, int index)
 		{
-			m_state = state;
-			m_state->pushvalue(index);
-			m_ref = m_state->ref(LUA_REGISTRYINDEX);
-			m_refcount = new int(1);
-			assert(m_ref != LUA_REFNIL);
+			release();
+			if(state)
+			{
+				m_state = state;
+				m_state->pushvalue(index);
+				m_ref = m_state->ref(LUA_REGISTRYINDEX);
+				m_refcount = new int(1);
+				assert(m_ref != LUA_REFNIL);
+			}
+			else
+			{
+				m_state = NULL;
+				m_refcount = NULL;
+				m_ref = LUA_REFNIL;
+			}
+		}
+		inline void ref(const registry_holder& other)
+		{
+			release();
+			m_state = other.m_state;
+			m_ref = other.m_ref;
+			m_refcount = other.m_refcount;
+			if (m_refcount)
+				++(*m_refcount);
 		}
 		inline void release()
 		{
@@ -479,35 +498,39 @@ namespace luastub
 		object() : basic_object()
 		{
 		}
-		object(state *state, int index) : basic_object(state, index)
+		object(state *state, int index)
 		{
+			bind(state, index);
 		}
 		object(const object &other)
 		{
-			_Ref(other);
+			ref(other);
 		}
-		object(const stack_object &other) : basic_object(other.m_state, other.m_index)
+		object(const stack_object &other)
 		{
+			bind(other.m_state, other.m_index);
 		}
-		object(const stack_ref &ref) : basic_object(ref.m_state, ref.m_index)
+		object(const stack_ref &ref)
 		{
+			bind(ref.m_state, ref.m_index);
 			this->m_state->pop(1);
 		}
-		object(const basic_object<stack_holder> &other) : basic_object(other.m_state, other.m_index)
+		object(const basic_object<stack_holder> &other)
 		{
+			bind(other.m_state, other.m_index);
 		}
 		object(const basic_object<registry_holder> &other)
 		{
-			_Ref(other);
+			ref(other);
 		}
 		object &operator = (const basic_object<registry_holder> &other)
 		{
-			_Ref(other);
+			ref(other);
 			return *this;
 		}
 		object &operator = (const object &other)
 		{
-			_Ref(other);
+			ref(other);
 			return *this;
 		}
 		object &operator = (const stack_object &other)
@@ -517,16 +540,6 @@ namespace luastub
 		object &operator = (const stack_ref &ref)
 		{
 			bind(ref.m_state, ref.m_index);
-		}
-	private:
-		void _Ref(const registry_holder &other)
-		{
-			release();
-			m_state = other.m_state;
-			m_ref = other.m_ref;
-			m_refcount = other.m_refcount;
-			if (m_refcount)
-				++(*m_refcount);
 		}
 	};
 
@@ -538,10 +551,10 @@ namespace luastub
 		template<typename T>
 		table_iterator(T other)
 		{
+			m_valid = true;
 			m_state = other.getstate();
 			m_top = m_state->gettop();
 			other.push();
-			m_index = m_state->gettop();
 			m_state->pushnil();
 			next();
 		}
@@ -549,20 +562,20 @@ namespace luastub
 		{
 			m_state->settop(m_top);
 		}
-		bool next()
+		void next()
 		{
 			if (valid())
 			{
-				m_state->settop(m_index + 1);
-				if (m_state->next(m_index))
-					return true;
-				m_index = 0;
+				m_state->settop(m_top + 2);
+				if (m_state->next(m_top + 1))
+					return;
+				m_valid = false;
+				m_state->settop(m_top);
 			}
-			return false;
 		}
 		bool valid()
 		{
-			return m_index != 0;
+			return m_valid;
 		}
 		table_iterator &operator ++()
 		{
@@ -577,13 +590,13 @@ namespace luastub
 		{
 			if (!valid())
 				throw e_invalid_iterator();
-			return stack_object(m_state, m_index + 1);
+			return stack_object(m_state, m_top + 2);
 		}
 		stack_object value()
 		{
 			if (!valid())
 				throw e_invalid_iterator();
-			return stack_object(m_state, m_index + 2);
+			return stack_object(m_state, m_top + 3);
 		}
 	private:
 		table_iterator& operator=(const table_iterator &);
@@ -591,7 +604,7 @@ namespace luastub
 	private:
 		state *m_state;
 		int m_top;
-		int m_index;
+		bool m_valid;
 	};
 	
 	//

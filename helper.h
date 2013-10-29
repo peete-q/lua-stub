@@ -93,7 +93,7 @@ namespace luastub
 			{
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
-				lua_pushfstring(L, "error: object (table: %p) has released", lua_topointer(L, 1));
+				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
 				lua_pushnumber(L, 3);
 				lua_call(L, 2, 1);
 				lua_error(L);
@@ -107,24 +107,26 @@ namespace luastub
 		return NULL;
 	}
 	
-	inline void *getobject(lua_State *L, int index)
+	template<typename T>
+	inline T *readobject(lua_State *L, int index)
 	{
 		int type = lua_type(L, index);
 		if (type == LUA_TUSERDATA)
-			return lua_touserdata(L, index);
+			return (T*)lua_touserdata(L, index);
 		else if (type == LUA_TTABLE) {
 			lua_pushstring(L, "__ptr");
 			lua_rawget(L, index);
 			if (!lua_isuserdata(L, -1))
 			{
+				const char *tname = cclass_manager::instance()->get<T>();
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
-				lua_pushfstring(L, "error: object (table: %p) has released", lua_topointer(L, 1));
+				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
 				lua_pushnumber(L, 3);
 				lua_call(L, 2, 1);
 				lua_error(L);
 			}
-			void *ptr = lua_touserdata(L, -1);
+			T *ptr = (T*)lua_touserdata(L, -1);
 			lua_pop(L, 1);
 			return ptr;
 		} else {
@@ -177,7 +179,7 @@ namespace luastub
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return *(T*)getobject(L, idx);
+				return *readobject<T>(L, idx);
 			return *(T*)lua_touserdata(L, idx);
 		}
 	};
@@ -203,7 +205,7 @@ namespace luastub
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return (T*)getobject(L, idx);
+				return readobject<T>(L, idx);
 			return (T*)lua_touserdata(L, idx);
 		}
 	};
@@ -229,7 +231,7 @@ namespace luastub
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return *(T*)getobject(L, idx);
+				return *readobject<T>(L, idx);
 			return *(T*)lua_touserdata(L, idx);
 		}
 	};
@@ -1317,7 +1319,7 @@ namespace luastub
 			typedef int (Callee::*Functor)(state*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Functor &func = *(Functor*)(buffer);
-			Callee &callee = *(Callee*)getobject(L, 1);
+			Callee &callee = *readobject<Callee>(L, 1);
 			return (callee.*func)(state::from(L));
 		}
 	};
@@ -1331,7 +1333,7 @@ namespace luastub
 			typedef int (Callee::*Functor)(lua_State*);
  			unsigned char *buffer = getupvalue(L, 1);
 			Method &method = *(Method*)(buffer);
-			Callee &callee = *(Callee*)getobject(L, 1);
+			Callee &callee = *readobject<Callee>(L, 1);
 			return call(callee, method, L, 2);
 		}
 	};
@@ -1423,7 +1425,7 @@ namespace luastub
 		static inline int getter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			Callee* callee = (Callee*)getobject(L, 1);
+			Callee* callee = readobject<Callee>(L, 1);
 			push(L, *(Var*)((unsigned char*)callee + (unsigned int)offset));
 			return 1;
 		}
@@ -1431,7 +1433,7 @@ namespace luastub
 		static inline int setter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			Callee* callee = (Callee*)getobject(L, 1);
+			Callee* callee = readobject<Callee>(L, 1);
 			if (!match<Var>(L, 2))
 				luaL_argerror(L, 2, "bad argument");
 			*(Var*)((unsigned char*)callee + (unsigned int)offset) = read<Var>(L, 2);

@@ -10,7 +10,7 @@ namespace luastub
 	struct ctor
 	{
 		template<typename T>
-		static T* construct(state *L)
+		static T *construct(state *L)
 		{
 			return new(L->newuserdata(sizeof(T))) T(check<P1>(L,1), check<P2>(L,2), check<P3>(L,3), check<P4>(L,4));
 		}
@@ -20,7 +20,7 @@ namespace luastub
 	struct ctor<P1, P2, P3>
 	{
 		template<typename T>
-		static T* construct(state *L)
+		static T *construct(state *L)
 		{
 			return new(L->newuserdata(sizeof(T))) T(check<P1>(L,1), check<P2>(L,2), check<P3>(L,3));
 		}
@@ -31,7 +31,7 @@ namespace luastub
 	struct ctor<P1, P2>
 	{
 		template<typename T>
-		static T* construct(state *L)
+		static T *construct(state *L)
 		{
 			return new(L->newuserdata(sizeof(T))) T(check<P1>(L,1), check<P2>(L,2));
 		}
@@ -41,7 +41,7 @@ namespace luastub
 	struct ctor<P1>
 	{
 		template<typename T>
-		static T* construct(state *L)
+		static T *construct(state *L)
 		{
 			return new(L->newuserdata(sizeof(T))) T(check<P1>(L,1));
 		}
@@ -51,7 +51,7 @@ namespace luastub
 	struct ctor<void>
 	{
 		template<typename T>
-		static T* construct(state *L)
+		static T *construct(state *L)
 		{
 			return new(L->newuserdata(sizeof(T))) T();
 		}
@@ -216,7 +216,7 @@ namespace luastub
 			o.setmetatable(m_metatable);
 			return o;
 		}
-		stack_object boxptr(T* ptr)
+		stack_object boxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
 			stack_object R = L->getregistry();
@@ -234,7 +234,7 @@ namespace luastub
 			R.pop();
 			return o;
 		}
-		void unboxptr(T* ptr)
+		void unboxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
 			stack_protector sp(L);
