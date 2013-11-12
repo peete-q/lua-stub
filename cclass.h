@@ -26,7 +26,6 @@ namespace luastub
 		}
 	};
 
-
 	template<typename P1, typename P2>
 	struct ctor<P1, P2>
 	{
@@ -84,10 +83,11 @@ namespace luastub
 			if (cclass_manager::instance()->get<T>())
 				throw e_type_already_exist();
 			stack_protector sp(L);
-			stack_object _G = L->getglobals();
+			object _G = L->getglobals();
 			if (!L->newmetatable(name))
 				throw e_name_already_exist();
 			m_metatable = L->getstack(-1);
+			m_metatable.push();
 			_G.def(name, &__ctor<Constructor>, 1);
 			L->pushstring(name);
 			m_metatable.def("__gc", &__gc, 1);
@@ -100,8 +100,8 @@ namespace luastub
 		{
 			state *L = m_metatable.getstate();
 			stack_protector sp(L);
-			stack_object R = L->getregistry();
-			stack_object meta = L->newtable();
+			object R = L->getregistry();
+			object meta = L->newtable();
 			meta.set("__index", R.get(name));
 			m_metatable.setmetatable(meta);
 			return *this;
@@ -164,114 +164,116 @@ namespace luastub
 			m_metatable.def_getter<Var>(key, var);
 			return *this;
 		}
-		stack_object newobject()
+		object newobject()
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T();
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
-		stack_object newobject(const T &value)
+		object newobject(const T &value)
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T(value);
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
 		template<typename P1>
-		stack_object newobject(P1 p1)
+		object newobject(P1 p1)
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T(p1);
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
 		template<typename P1, typename P2>
-		stack_object newobject(P1 p1, P2 p2)
+		object newobject(P1 p1, P2 p2)
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T(p1, p2);
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
 		template<typename P1, typename P2, typename P3>
-		stack_object newobject(P1 p1, P2 p2, P3 p3)
+		object newobject(P1 p1, P2 p2, P3 p3)
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T(p1, p2, p3);
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
 		template<typename P1, typename P2, typename P3, typename P4>
-		stack_object newobject(P1 p1, P2 p2, P3 p3, P4 p4)
+		object newobject(P1 p1, P2 p2, P3 p3, P4 p4)
 		{
 			state *L = m_metatable.getstate();
 			T *ptr = new (L->newuserdata(sizeof(T))) T(p1, p2, p3, p4);
-			stack_object o(L, -1);
+			object o = L->getstack(-1);
 			o.setmetatable(m_metatable);
 			return o;
 		}
-		stack_object boxptr(T *ptr)
+		object boxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
-			stack_object R = L->getregistry();
-			stack_object o = R.get(lightuserdata<T>(ptr));
+			object R = L->getregistry();
+			object o = R.get(lightuserdata<T>(ptr));
 			if (o != nil)
-			{
-				R.pop();
 				return o;
-			}
-			o.pop();
+			
 			o = L->newtable();
-			o.set("__ptr", lightuserdata<T>(ptr));
+			L->pushlightuserdata(ptr);
+			o.def("__self", &__self, 1);
 			o.setmetatable(m_metatable);
 			R.set(lightuserdata<T>(ptr), o);
-			R.pop();
 			return o;
 		}
 		void unboxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
 			stack_protector sp(L);
-			stack_object R = L->getregistry();
-			stack_object o = R.get(lightuserdata<T>(ptr));
-			if (o != nil)
-			{
-				o.set("__ptr", false);
-				R.set(lightuserdata<T>(ptr), nil);
-			}
+			object R = L->getregistry();
+			R.set(lightuserdata<T>(ptr), nil);
 		}
 	private:
 		cclass() {}
-		cclass(const stack_object &o) : m_metatable(o) {}
+		cclass(const object &o) : m_metatable(o) {}
 		
 		template<typename Constructor>
 		static int __ctor(state *L)
 		{
-			int args = L->gettop();
-			stack_object mt = L->upvalue(2);
 			T *(*ctor)(state*) = &Constructor::construct;
 			T *ptr = (*ctor)(L);
-			stack_object o = L->getstack(-1);
-			o.setmetatable(mt);
+			L->pushvalue(upvalueindex(1));
+			L->setmetatable(-2);
 			return 1;
 		}
 		static int __gc(state *L)
 		{
-			stack_object name = L->upvalue(2);
-			if (T *ptr = (T*)L->checkudata(1, name.tostring()))
+			if (T *ptr = (T*)L->checkudata(1, L->tostring(upvalueindex(1))))
 				ptr->~T();
 			return 0;
 		}
 		static int __tostring(state *L)
 		{
-			stack_object name = L->upvalue(2);
-			L->pushfstring("object{cclass:%s} (%s: %p)", name.tostring(), L->typename_of(1), L->topointer(1));
+			L->pushfstring("object{cclass:%s} (%s: %p)", L->tostring(upvalueindex(1)), L->typename_of(1), L->topointer(1));
+			return 1;
+		}
+		static int __self(state *L)
+		{
+			L->pushvalue(upvalueindex(1));
+			L->gettable(LUA_REGISTRYINDEX);
+			if (L->isnil(-1))
+			{
+				L->pop(1);
+				L->pushnil();
+				return 1;
+			}
+			L->pop(1);
+			L->pushvalue(upvalueindex(1));
 			return 1;
 		}
 	private:

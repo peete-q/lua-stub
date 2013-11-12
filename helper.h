@@ -16,8 +16,8 @@ extern "C"
 
 namespace luastub
 {
-	template<typename T>
-	class basic_object;
+	struct e_undefined_cclass;
+	
 	template<typename T>
 	class cclass;
 	
@@ -75,38 +75,6 @@ namespace luastub
 		return false;
 	}
 	
-	inline void *checkobject(lua_State *L, int index, const char *tname)
-	{
-		int type = lua_type(L, index);
-		if (type == LUA_TUSERDATA)
-			return luaL_checkudata(L, index, tname);
-		else if (type == LUA_TTABLE) {
-			if (!lua_getmetatable(L, index))			/* does it have a metatable? */
-				luaL_typerror(L, index, tname);
-			lua_getfield(L, LUA_REGISTRYINDEX, tname);	/* get correct metatable */
-			if (!lua_rawequal(L, -1, -2))
-				luaL_typerror(L, index, tname);
-			lua_pop(L, 2);
-			lua_pushstring(L, "__ptr");
-			lua_rawget(L, index);
-			if (!lua_isuserdata(L, -1))
-			{
-				lua_getglobal(L, "debug");
-				lua_getfield(L, -1, "traceback");
-				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
-				lua_pushnumber(L, 3);
-				lua_call(L, 2, 1);
-				lua_error(L);
-			}
-			void *ptr = lua_touserdata(L, -1);
-			lua_pop(L, 1);
-			return ptr;
-		} else {
-			luaL_typerror(L, index, tname);
-		}
-		return NULL;
-	}
-	
 	template<typename T>
 	inline T *readobject(lua_State *L, int index)
 	{
@@ -114,20 +82,31 @@ namespace luastub
 		if (type == LUA_TUSERDATA)
 			return (T*)lua_touserdata(L, index);
 		else if (type == LUA_TTABLE) {
-			lua_pushstring(L, "__ptr");
+			int top = lua_gettop(L);
+			lua_pushstring(L, "__self");
 			lua_rawget(L, index);
+			if (lua_isnil(L, -1))
+			{
+				const char *tname = cclass_manager::instance()->get<T>();
+				lua_getglobal(L, "debug");
+				lua_getfield(L, -1, "traceback");
+				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) miss __self", tname, lua_topointer(L, 1));
+				lua_call(L, 1, 1);
+				lua_error(L);
+			}
+			lua_pushvalue(L, index);
+			lua_call(L, 1, 1);
 			if (!lua_isuserdata(L, -1))
 			{
 				const char *tname = cclass_manager::instance()->get<T>();
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
 				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
-				lua_pushnumber(L, 3);
-				lua_call(L, 2, 1);
+				lua_call(L, 1, 1);
 				lua_error(L);
 			}
 			T *ptr = (T*)lua_touserdata(L, -1);
-			lua_pop(L, 1);
+			lua_settop(L, top);
 			return ptr;
 		} else {
 			luaL_argerror(L, index, "expected userdata or table with __ptr");
@@ -160,84 +139,115 @@ namespace luastub
 	template<typename T>
 	struct value_type
 	{
+		static const char *type()
+		{
+			const char *name = cclass_manager::instance()->get<T>();
+			if (name)
+				return name;
+			return "userdata";
+		}
 		static void push(lua_State *L, T &value)
 		{
 			cclass<T> c(state::from(L));
 			if (c.valid())
-				c.newobject(value);
+				c.newobject(value).push();
 			else
 				new (lua_newuserdata(L, sizeof(T))) T(value);
 		}
-		static bool match(lua_State *L, int idx)
+		static bool match(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return matchobject(L, idx, name);
-			return lua_type(L, idx) == LUA_TUSERDATA;
+				return matchobject(L, index, name);
+			return lua_type(L, index) == LUA_TUSERDATA;
 		}
-		static T read(lua_State *L, int idx)
+		static T read(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return *readobject<T>(L, idx);
-			return *(T*)lua_touserdata(L, idx);
+				return *readobject<T>(L, index);
+			return *(T*)lua_touserdata(L, index);
 		}
 	};
 	template<typename T>
 	struct ptr_type
 	{
+		static const char *type()
+		{
+			const char *name = cclass_manager::instance()->get<T>();
+			if (name)
+				return name;
+			return "lightuserdata";
+		}
 		static void push(lua_State *L, T *value)
 		{
 			cclass<T> c(state::from(L));
 			if (c.valid())
-				c.boxptr(value);
+				c.boxptr(value).push();
 			else
 				lua_pushlightuserdata(L, (void*)value);
 		}
-		static bool match(lua_State *L, int idx)
+		static bool match(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return matchobject(L, idx, name);
-			return lua_islightuserdata(L, idx);
+				return matchobject(L, index, name);
+			return lua_islightuserdata(L, index);
 		}
-		static T *read(lua_State *L, int idx)
+		static T *read(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return readobject<T>(L, idx);
-			return (T*)lua_touserdata(L, idx);
+				return readobject<T>(L, index);
+			return (T*)lua_touserdata(L, index);
 		}
 	};
 	template<typename T>
 	struct ref_type
 	{
+		static const char *type()
+		{
+			const char *name = cclass_manager::instance()->get<T>();
+			if (name)
+				return name;
+			return "lightuserdata";
+		}
 		static void push(lua_State *L, T &value)
 		{
 			cclass<T> c(state::from(L));
 			if (c.valid())
-				c.boxptr(&value);
+				c.boxptr(&value).push();
 			else
 				lua_pushlightuserdata(L, (void*)&value);
 		}
-		static bool match(lua_State *L, int idx)
+		static bool match(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return matchobject(L, idx, name);
-			return lua_islightuserdata(L, idx);
+				return matchobject(L, index, name);
+			return lua_islightuserdata(L, index);
 		}
-		static T &read(lua_State *L, int idx)
+		static T &read(lua_State *L, int index)
 		{
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
-				return *readobject<T>(L, idx);
-			return *(T*)lua_touserdata(L, idx);
+				return *readobject<T>(L, index);
+			return *(T*)lua_touserdata(L, index);
 		}
 	};
 	template<typename T>
 	struct any_type
 	{
+		static const char *type()
+		{
+			return if_<is_ptr<T>::value
+				,ptr_type<typename base_type<T>::type>
+				,typename if_<is_ref<T>::value
+					,ref_type<typename base_type<T>::type>
+					,value_type<typename base_type<T>::type>
+				>::type
+			>::type::type();
+		}
 		static void push(lua_State *L, T value)
 		{
 			if_<is_ptr<T>::value
@@ -248,7 +258,7 @@ namespace luastub
 				>::type
 			>::type::push(L, value);
 		}
-		static bool match(lua_State *L, int idx)
+		static bool match(lua_State *L, int index)
 		{
 			return if_<is_ptr<T>::value
 				,ptr_type<typename base_type<T>::type>
@@ -256,9 +266,9 @@ namespace luastub
 					,ref_type<typename base_type<T>::type>
 					,value_type<typename base_type<T>::type>
 				>::type
-			>::type::match(L, idx);
+			>::type::match(L, index);
 		}
-		static T read(lua_State *L, int idx)
+		static T read(lua_State *L, int index)
 		{
 			return if_<is_ptr<T>::value
 				,ptr_type<typename base_type<T>::type>
@@ -266,175 +276,176 @@ namespace luastub
 					,ref_type<typename base_type<T>::type>
 					,value_type<typename base_type<T>::type>
 				>::type
-			>::type::read(L, idx);
+			>::type::read(L, index);
 		}
 	};
 	template<typename T>
 	struct any_type <userdata<T> >
 	{
-		static void push(lua_State *L, userdata<T> value)
-		{
-			new (lua_newuserdata(L, sizeof(T))) T(*value.ptr);
-		}
-		static bool match(lua_State *L, int idx)
-		{
-			return lua_type(L, idx) == LUA_TUSERDATA;
-		}
-		static userdata<T> read(lua_State *L, int idx)
-		{
-			return userdata<T>(*(T*)lua_touserdata(L, idx));
-		}
+		static const char *type() {return "userdata";}
+		static void push(lua_State *L, userdata<T> value) {new (lua_newuserdata(L, sizeof(T))) T(*value.ptr);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TUSERDATA;}
+		static userdata<T> read(lua_State *L, int index) {return userdata<T>(*(T*)lua_touserdata(L, index));}
 	};
 	template<typename T>
 	struct any_type <lightuserdata<T> >
 	{
-		static void push(lua_State *L, lightuserdata<T> value)
-		{
-			lua_pushlightuserdata(L, (void*)value.ptr);
-		}
-		static bool match(lua_State *L, int idx)
-		{
-			return lua_type(L, idx) == LUA_TLIGHTUSERDATA;
-		}
-		static lightuserdata<T> read(lua_State *L, int idx)
-		{
-			return lightuserdata<T>(lua_touserdata(L, idx));
-		}
-	};
-	template<typename T>
-	struct any_type <basic_object<T> >
-	{
-		static void push(lua_State *L, const basic_object<T> &value)
-		{
-			value.push();
-		}
-		static bool match(lua_State *L, int idx)
-		{
-			return true;
-		}
-		static basic_object<T> read(lua_State *L, int idx)
-		{
-			return basic_object<T>(state::from(L), idx);
-		}
+		static const char *type() {return "lightuserdata";}
+		static void push(lua_State *L, lightuserdata<T> value) {lua_pushlightuserdata(L, (void*)value.ptr);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TLIGHTUSERDATA;}
+		static lightuserdata<T> read(lua_State *L, int index) {return lightuserdata<T>(lua_touserdata(L, index));}
 	};
 
-	inline void push(lua_State *L, bool value)					{lua_pushboolean(L, value);}
-	inline void push(lua_State *L, char value)					{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, unsigned char value)			{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, short value)					{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, unsigned short value)		{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, int value)					{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, unsigned int value)			{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, long value)					{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, unsigned long value)			{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, double value)				{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, float value)					{lua_pushnumber(L, value);}
-	inline void push(lua_State *L, const char *value)			{lua_pushstring(L, value);}
-	inline void push(lua_State *L, const char *value, int len)	{lua_pushlstring(L, value, len);}
-	inline void push(lua_State *L, const nil_t&)				{lua_pushnil(L);}
-	inline void push(lua_State *L, lua_CFunction value)			{lua_pushcclosure(L, value, 0);}
-	inline void push(lua_State *L, void *value)					{lua_pushlightuserdata(L, value);}
-	inline void push(lua_State *L, const void *value)			{lua_pushlightuserdata(L, (void*)value);}
-	inline void push(lua_State *L, const std::string& value)	{lua_pushstring(L, value.c_str());}
-
-	template<typename T>
-	inline void push(lua_State *L, T value)						{any_type<T>::push(L, value);}
-
-	template<typename T>
-	inline bool match(lua_State *L, int idx)
-		{return any_type<T>::match(L, idx);}
-	
-	template<typename T>
-	inline bool match(state *L, int idx)
-		{return match<T>(L->cptr(), idx);}
-	
-	template<> inline bool match<bool>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TBOOLEAN;}
-	template<> inline bool match<char>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<unsigned char>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<short>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<unsigned short>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<int>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<unsigned int>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<long>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<unsigned long>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<float>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<double>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNUMBER;}
-	template<> inline bool match<const char*>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TSTRING;}
-	template<> inline bool match<lua_State*>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNONE;}
-	template<> inline bool match<state*>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TNONE;}
-	template<> inline bool match<void*>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TLIGHTUSERDATA;}
-	template<> inline bool match<std::string>(lua_State *L, int idx)
-		{return lua_type(L, idx) == LUA_TSTRING;}
-
-	template<typename T>
-	inline T read(lua_State *L, int idx)
-		{return any_type<T>::read(L, idx);}
-	
-	template<typename T>
-	inline T read(state *L, int idx)
-		{return read<T>(L->cptr(), idx);}
-	
-	template<> inline bool			read<bool>(lua_State *L, int idx)
-		{return lua_toboolean(L, idx) != 0;}
-	template<> inline char			read<char>(lua_State *L, int idx)
-		{return static_cast<char>(lua_tonumber(L, idx));}
-	template<> inline unsigned char	read<unsigned char>(lua_State *L, int idx)
-		{return static_cast<unsigned char>(lua_tonumber(L, idx));}
-	template<> inline short			read<short>(lua_State *L, int idx)
-		{return static_cast<short>(lua_tonumber(L, idx));}
-	template<> inline unsigned short	read<unsigned short>(lua_State *L, int idx)
-		{return static_cast<unsigned short>(lua_tonumber(L, idx));}
-	template<> inline int			read<int>(lua_State *L, int idx)
-		{return static_cast<int>(lua_tonumber(L, idx));}
-	template<> inline unsigned int	read<unsigned int>(lua_State *L, int idx)
-		{return static_cast<unsigned int>(lua_tonumber(L, idx));}
-	template<> inline long			read<long>(lua_State *L, int idx)
-		{return static_cast<long>(lua_tonumber(L, idx));}
-	template<> inline unsigned long	read<unsigned long>(lua_State *L, int idx)
-		{return static_cast<unsigned long>(lua_tonumber(L, idx));}
-	template<> inline float			read<float>(lua_State *L, int idx)
-		{return static_cast<float>(lua_tonumber(L, idx));}
-	template<> inline double		read<double>(lua_State *L, int idx)
-		{return static_cast<double>(lua_tonumber(L, idx));}
-	template<> inline const char*	read<const char*>(lua_State *L, int idx)
-		{return static_cast<const char*>(lua_tostring(L, idx));}
-	template<> inline std::string	read<std::string>(lua_State *L, int idx)
-		{return std::string(lua_tostring(L, idx));}
-	template<> inline nil_t			read<nil_t>(lua_State */*L*/, int /*idx*/)
-		{return nil;}
-	template<> inline lua_CFunction	read<lua_CFunction>(lua_State *L, int idx)
-		{return static_cast<lua_CFunction>(lua_tocfunction(L, idx));}
-	template<> inline void*			read<void*>(lua_State *L, int idx)
-		{return static_cast<void*>(lua_touserdata(L, idx));}
-	template<> inline lua_State*	read<lua_State*>(lua_State *L, int /*idx*/)
-		{return L;}
-	template<> inline state*		read<state*>(lua_State *L, int /*idx*/)
-		{return state::from(L);}
-
-	template<typename T> inline T check(lua_State *L, int idx)
+	template<>
+	struct any_type<bool>
 	{
-		if(!match<T>(L, idx))
-			luaL_argerror(L, idx, "bad argument");
-		return read<T>(L, idx);
+		static const char *type() {return "boolean";}
+		static void push(lua_State *L, bool value) {lua_pushboolean(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TBOOLEAN;}
+		static bool read(lua_State *L, int index) {return lua_toboolean(L, index) != 0;}
+	};
+	
+	template<>
+	struct any_type<char>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, char value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static char read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<unsigned char>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, unsigned char value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static unsigned char read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<short>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, short value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static short read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<unsigned short>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, unsigned short value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static unsigned short read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<int>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, int value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static int read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<unsigned int>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, unsigned int value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static unsigned int read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<long>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, long value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static long read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<unsigned long>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, unsigned long value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static unsigned long read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<double>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, double value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static double read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<float>
+	{
+		static const char *type() {return "number";}
+		static void push(lua_State *L, float value) {lua_pushnumber(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNUMBER;}
+		static float read(lua_State *L, int index) {return lua_tonumber(L, index);}
+	};
+	template<>
+	struct any_type<const char *>
+	{
+		static const char *type() {return "string";}
+		static void push(lua_State *L, const char * value) {lua_pushstring(L, value);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TSTRING;}
+		static const char * read(lua_State *L, int index) {return lua_tostring(L, index);}
+	};
+	template<>
+	struct any_type<std::string>
+	{
+		static const char *type() {return "string";}
+		static void push(lua_State *L, const std::string & value) {lua_pushstring(L, value.c_str());}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TSTRING;}
+		static const char * read(lua_State *L, int index) {return lua_tostring(L, index);}
+	};
+	template<>
+	struct any_type<lua_CFunction>
+	{
+		static const char *type() {return "function";}
+		static void push(lua_State *L, lua_CFunction value) {lua_pushcclosure(L, value, 0);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TFUNCTION;}
+		static lua_CFunction read(lua_State *L, int index) {return lua_tocfunction(L, index);}
+	};
+	template<>
+	struct any_type<nil_t>
+	{
+		static const char *type() {return "nil";}
+		static void push(lua_State *L, const nil_t &value) {lua_pushnil(L);}
+		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TNIL;}
+		static nil_t read(lua_State *L, int index) {return nil;}
+	};
+	
+	template<typename T>
+	inline void push(lua_State *L, T value) {any_type<T>::push(L, value);}
+	template<typename T>
+	inline void push(state *L, T value) {push<T>(L->cptr(), value);}
+	
+	template<typename T>
+	inline bool match(lua_State *L, int index) {return any_type<T>::match(L, index);}
+	template<typename T>
+	inline bool match(state *L, int index) {return match<T>(L->cptr(), index);}
+	
+	template<typename T>
+	inline T read(lua_State *L, int index) {return any_type<T>::read(L, index);}
+	template<typename T>
+	inline T read(state *L, int index) {return read<T>(L->cptr(), index);}
+	
+	template<typename T> inline T check(lua_State *L, int index)
+	{
+		if(!any_type<T>::match(L, index))
+		{
+			char msg[256];
+			sprintf(msg, "expect %s, got %s", any_type<T>::type(), luaL_typename(L, index));
+			luaL_argerror(L, index, msg);
+		}
+		return any_type<T>::read(L, index);
 	}
-	template<typename T> inline T check(state *L, int idx)
+	template<typename T> inline T check(state *L, int index)
 	{
-		return check<T>(L->cptr(), idx);
+		return check<T>(L->cptr(), index);
 	}
 
 	template<class RT>
@@ -1369,7 +1380,7 @@ namespace luastub
 													// t v
 		lua_getmetatable(L, 1);						// t v m
 		lua_pushvalue(L, 2);						// t v m v
-		lua_rawget(L, -2);							// t v m lookup
+		lua_gettable(L, -2);						// t v m lookup
 		if (!lua_isnil(L, -1))
 			return 1;
 
@@ -1434,9 +1445,7 @@ namespace luastub
 		{
 			void *offset = getupvalue(L, 1);
 			Callee* callee = readobject<Callee>(L, 1);
-			if (!match<Var>(L, 2))
-				luaL_argerror(L, 2, "bad argument");
-			*(Var*)((unsigned char*)callee + (unsigned int)offset) = read<Var>(L, 2);
+			*(Var*)((unsigned char*)callee + (unsigned int)offset) = check<Var>(L, 2);
 			return 1;
 		}
 	};
@@ -1455,9 +1464,7 @@ namespace luastub
 		static inline int setter(lua_State *L)
 		{
 			void *offset = getupvalue(L, 1);
-			if (!match<Var>(L, 2))
-				luaL_argerror(L, 2, "bad argument");
-			*(Var*)offset = read<Var>(L, 2);
+			*(Var*)offset = check<Var>(L, 2);
 			return 1;
 		}
 	};

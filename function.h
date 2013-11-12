@@ -28,7 +28,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 0, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -43,7 +43,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 1, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -59,7 +59,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 2, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -76,7 +76,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 3, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -94,7 +94,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 4, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -113,7 +113,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 5, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -133,7 +133,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 6, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -154,7 +154,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 7, 1, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -187,7 +187,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 0, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -201,7 +201,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 1, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -216,7 +216,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 2, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -232,7 +232,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 3, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -249,7 +249,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 4, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -267,7 +267,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 5, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -286,7 +286,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 6, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 
@@ -306,7 +306,7 @@ namespace luastub {
 
 			if (lua_pcall(L, 7, 0, 0)) {
 				const char *message = lua_tostring(L, -1);
-				state::function_error_cb(message);
+				state::function_error(message);
 			}
 		}
 

@@ -5,16 +5,21 @@
 
 #define test(e,tab) printf("[test]	%s%s[%s]\n", #e, tab, (e)?"ok":"failed")
 
-struct point
+struct base
+{
+	base() {}
+	virtual void whoami() {puts("I am base");}
+};
+struct point : base
 {
 	int x, y;
 	const char *where;
 	point(const char *_where, int _x, int _y) : where(_where), x(_x), y(_y) {}
 	~point() {printf("[%s:0x%x]	released\n", where, this, x, y);}
-	void output() {printf("[%s:0x%x]	is (%d,%d)\n", where, this, x, y);}
-	static const char *classname() {return "struct point";}
-	static int foo(luastub::state *L) {
-		L->pushstring("return point::foo");
+	void whoami() {printf("I am point %s:0x%x (%d,%d)\n", where, this, x, y);}
+	static const char *classname() {return "My classname is point";}
+	static int dosomething(luastub::state *L) {
+		L->pushstring("ok, do what you want to do");
 		return 1;
 	}
 };
@@ -54,49 +59,55 @@ int main()
 	
 	point pt("cpp", 0, 0);
 	int n = 0;
+	luastub::cclass<base>(L, "base", luastub::ctor<void>())
+		.def_method("whoami", &base::whoami);
+		
 	luastub::cclass<point>(L, "point", luastub::ctor<const char*,int,int>())
+		.inherit("base")
 		.def("classname", &point::classname)
-		.def("foo", &point::foo)
-		.def_method("output", &point::output)
+		.def("dosomething", &point::dosomething)
 		.def_property("n", &n)
 		.def_property("x", &point::x)
 		.def_getter("y", &point::y);
 		
 	luastub::cclass<point> c(L);
-	// new a point, manage life scope in lua
+	// new a point, manage life span in lua
 	_G.set("o", c.newobject("cpp", 1, 1));
-	// new a point, manage life scope in c++
+	// new a point, manage life span in c++
 	_G.set("p", &pt);
-	_G.def("g_output", &pt, &point::output);
-	_G.def("g_classname", &point::classname);
-	_G.def("g_foo", &point::foo);
+	_G.def("whoami", &pt, &point::whoami);
+	_G.def("classname", &point::classname);
+	_G.def("dosomething", &point::dosomething);
 	int err = L->dostring(
-		"print('[functor]', g_classname())					"
-		"print('[functor]', g_foo())						"
-		"v = point('lua',2,2)								"
-		"print('[method]', v.classname())					"
-		"print('[method]', v.foo())							"
-		"g_output()											"
-		"v:output()											"
-		"o:output()											"
-		"p:output()											"
-		"v.x = 1000											"
-		"v.n = 2000											"
-		"print('[v]', v, v.x, v.y, v.n)						"
-		"print('[o]', o, o.x, o.y, o.n)						"
-		"print('[p]',p, p.x, p.y, p.n)						"
+		"print('[functor]', classname())					\n"
+		"print('[functor]', dosomething())					\n"
+		"v = point('lua',2,2)								\n"
+		"print('[method]', v.classname())					\n"
+		"print('[method]', v.dosomething())					\n"
+		"whoami()											\n"
+		"v:whoami()											\n"
+		"o:whoami()											\n"
+		"p:whoami()											\n"
+		"v.x = 1000											\n"
+		"v.n = 2000											\n"
+		"print('[v]', v, v.x, v.y, v.n)						\n"
+		"print('[o]', o, o.x, o.y, o.n)						\n"
+		"print('[p]', p, p.x, p.y, p.n)						\n"
+		"print('now p.__self() is ', p.__self())			\n",
+		"test chunk 1"
 	);
 	if (err)
-		puts(L->getstack(-1)->tostring());
+		puts(L->tostring(-1));
 	
 	c.unboxptr(&pt);
 	err = L->dostring(
-		"print('[p.__ptr]', p.__ptr)						"
-		"function fun() p.x = 1000	end						"
-		"fun()												"
+		"print('now p.__self() is ', type(p.__self()))		\n"
+		"function fun() p.x = 1000	end						\n"
+		"fun()												\n",
+		"test chunk 2"
 	);
 	if (err)
-		puts(L->getstack(-1)->tostring());
+		puts(L->tostring(-1));
 	print(true, false, luastub::nil, n);
 	print("---- test end ----");
 	return 1;
