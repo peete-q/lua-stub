@@ -83,13 +83,6 @@ namespace luastub
 		inline stack_index pushlstring(const char *s, size_t len) {lua_pushlstring(cptr(), s, len); return stack_index(this, gettop());}
 		inline stack_index pushstring(const char *s) {lua_pushstring(cptr(), s); return stack_index(this, gettop());}
 		inline stack_index pushvfstring(const char *fmt, va_list args) {lua_pushvfstring(cptr(), fmt, args); return stack_index(this, gettop());}
-		inline stack_index pushfstring(const char *fmt, ...) {
-			va_list args;
-			va_start(args, fmt);
-			lua_pushvfstring(cptr(), fmt, args);
-			va_end(args);
-			return stack_index(this, gettop());
-		}
 		inline stack_index pushcclosure(lua_CFunction fn, int n) {lua_pushcclosure(cptr(), fn, n); return stack_index(this, gettop());}
 		inline stack_index pushcfunction(lua_CFunction f) {lua_pushcfunction(cptr(), f); return stack_index(this, gettop());}
 		inline stack_index pushboolean(bool value) {lua_pushboolean(cptr(), value); return stack_index(this, gettop());}
@@ -126,7 +119,6 @@ namespace luastub
 		inline int status() {return lua_status(cptr());}
 			
 		inline int gc(int what, int data) {return lua_gc(cptr(), what, data);}
-		inline int error() {return lua_error(cptr());}
 		inline int next(int index) {return lua_next(cptr(), index);}
 		inline void concat(int n) {lua_concat(cptr(), n);}
 		inline void pop(int n) {lua_pop(cptr(), n);}
@@ -149,16 +141,6 @@ namespace luastub
 		inline int newmetatable(const char *tname) {return luaL_newmetatable(cptr(), tname);}
 		inline void *checkudata(int ud, const char *tname) {return luaL_checkudata(cptr(), ud, tname);}
 		inline void where(int lvl) {luaL_where(cptr(), lvl);}
-		inline int error(const char *fmt, ...)
-		{
-			va_list args;
-			va_start(args, fmt);
-			luaL_where(cptr(), 1);
-			lua_pushvfstring(cptr(), fmt, args);
-			va_end(args);
-			lua_concat(cptr(), 2);
-			return lua_error(cptr());
-		}
 		inline int ref(int t) {return luaL_ref(cptr(), t);}
 		inline void unref(int t, int ref) {luaL_unref(cptr(), t, ref);}
 		
@@ -171,11 +153,38 @@ namespace luastub
 		inline int dostring(const char *s) {return luaL_loadstring(cptr(), s) || lua_pcall(cptr(), 0, LUA_MULTRET, 0);}
 		inline void openlibs() {luaL_openlibs(cptr());}
 		inline int absindex(int i) {return i > 0 || i < LUA_REGISTRYINDEX ? i : gettop() + i + 1;}
+		inline int error() {return lua_error(cptr());}
 		
-		typedef int (*error_handle)(const char *);
-		static error_handle function_error;
+		inline stack_index pushfstring(const char *fmt, ...)
+		{
+			va_list args;
+			va_start(args, fmt);
+			lua_pushvfstring(cptr(), fmt, args);
+			va_end(args);
+			return stack_index(this, gettop());
+		}
+		inline int error(const char *fmt, ...)
+		{
+			va_list args;
+			va_start(args, fmt);
+			luaL_where(cptr(), 1);
+			lua_pushvfstring(cptr(), fmt, args);
+			va_end(args);
+			lua_concat(cptr(), 2);
+			return lua_error(cptr());
+		}
+		inline void traceback(const char *fmt, ...)
+		{
+			lua_getglobal(cptr(), "debug");
+			lua_getfield(cptr(), -1, "traceback");
+			va_list args;
+			va_start(args, fmt);
+			luaL_where(cptr(), 1);
+			lua_pushvfstring(cptr(), fmt, args);
+			va_end(args);
+			lua_call(cptr(), 1, 1);
+		}
 	};
-	state::error_handle state::function_error = &puts;
 	
 	inline int upvalueindex(int n) {return lua_upvalueindex(n + 1);}
 	
@@ -199,6 +208,7 @@ namespace luastub
 		stack_protector(state *state) : m_state(state), m_top(state->gettop()) {}
 		~stack_protector() {restore();}
 		void restore() {if (m_state) m_state->settop(m_top), m_state = NULL;}
+		int gettop() {return m_top;}
 	private:
 		state *m_state;
 		int m_top;

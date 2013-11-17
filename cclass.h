@@ -73,9 +73,9 @@ namespace luastub
 				m_metatable = L->gettable(LUA_REGISTRYINDEX);
 			}
 		}
-		bool valid() const
+		bool isnone() const
 		{
-			return m_metatable.valid();
+			return m_metatable.isnone();
 		}
 		template<typename Constructor>
 		cclass(state *L, const char* name, Constructor = ctor<void>())

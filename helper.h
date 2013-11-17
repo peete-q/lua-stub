@@ -81,7 +81,8 @@ namespace luastub
 		int type = lua_type(L, index);
 		if (type == LUA_TUSERDATA)
 			return (T*)lua_touserdata(L, index);
-		else if (type == LUA_TTABLE) {
+		else if (type == LUA_TTABLE)
+		{
 			int top = lua_gettop(L);
 			lua_pushstring(L, "__self");
 			lua_rawget(L, index);
@@ -90,7 +91,7 @@ namespace luastub
 				const char *tname = cclass_manager::instance()->get<T>();
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
-				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) miss __self", tname, lua_topointer(L, 1));
+				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) miss __self", tname, lua_topointer(L, index));
 				lua_call(L, 1, 1);
 				lua_error(L);
 			}
@@ -108,8 +109,15 @@ namespace luastub
 			T *ptr = (T*)lua_touserdata(L, -1);
 			lua_settop(L, top);
 			return ptr;
-		} else {
-			luaL_argerror(L, index, "expected userdata or table with __ptr");
+		} 
+		else
+		{
+			const char *tname = cclass_manager::instance()->get<T>();
+			lua_getglobal(L, "debug");
+			lua_getfield(L, -1, "traceback");
+			lua_pushfstring(L, "expected object{cclass:%s}, got %s", tname, lua_typename(L, type));
+			lua_call(L, 1, 1);
+			luaL_argerror(L, index, lua_tostring(L, -1));
 		}
 		return NULL;
 	}
@@ -149,7 +157,7 @@ namespace luastub
 		static void push(lua_State *L, T &value)
 		{
 			cclass<T> c(state::from(L));
-			if (c.valid())
+			if (!c.isnone())
 				c.newobject(value).push();
 			else
 				new (lua_newuserdata(L, sizeof(T))) T(value);
@@ -182,7 +190,7 @@ namespace luastub
 		static void push(lua_State *L, T *value)
 		{
 			cclass<T> c(state::from(L));
-			if (c.valid())
+			if (!c.isnone())
 				c.boxptr(value).push();
 			else
 				lua_pushlightuserdata(L, (void*)value);
@@ -215,7 +223,7 @@ namespace luastub
 		static void push(lua_State *L, T &value)
 		{
 			cclass<T> c(state::from(L));
-			if (c.valid())
+			if (!c.isnone())
 				c.boxptr(&value).push();
 			else
 				lua_pushlightuserdata(L, (void*)&value);
@@ -389,9 +397,9 @@ namespace luastub
 	struct any_type<const char *>
 	{
 		static const char *type() {return "string";}
-		static void push(lua_State *L, const char * value) {lua_pushstring(L, value);}
+		static void push(lua_State *L, const char *value) {lua_pushstring(L, value);}
 		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TSTRING;}
-		static const char * read(lua_State *L, int index) {return lua_tostring(L, index);}
+		static const char *read(lua_State *L, int index) {return lua_tostring(L, index);}
 	};
 	template<>
 	struct any_type<std::string>
@@ -399,8 +407,13 @@ namespace luastub
 		static const char *type() {return "string";}
 		static void push(lua_State *L, const std::string & value) {lua_pushstring(L, value.c_str());}
 		static bool match(lua_State *L, int index) {return lua_type(L, index) == LUA_TSTRING;}
-		static const char * read(lua_State *L, int index) {return lua_tostring(L, index);}
+		static const char *read(lua_State *L, int index) {return lua_tostring(L, index);}
 	};
+	template<>
+	struct any_type<std::string&>;
+	template<>
+	struct any_type<const std::string&>;
+	
 	template<>
 	struct any_type<lua_CFunction>
 	{
@@ -433,20 +446,26 @@ namespace luastub
 	template<typename T>
 	inline T read(state *L, int index) {return read<T>(L->cptr(), index);}
 	
-	template<typename T> inline T check(lua_State *L, int index)
+	template<typename T>
+	inline T check(lua_State *L, int index)
 	{
 		if(!any_type<T>::match(L, index))
 		{
-			char msg[256];
-			sprintf(msg, "expect %s, got %s", any_type<T>::type(), luaL_typename(L, index));
-			luaL_argerror(L, index, msg);
+			const char *tname = cclass_manager::instance()->get<T>();
+			lua_getglobal(L, "debug");
+			lua_getfield(L, -1, "traceback");
+			if (tname)
+				lua_pushfstring(L, "expected object{cclass:%s}, got %s", tname, luaL_typename(L, index));
+			else
+				lua_pushfstring(L, "expected %s, got %s", any_type<T>::type(), luaL_typename(L, index));
+			lua_call(L, 1, 1);
+			luaL_argerror(L, index, lua_tostring(L, -1));
 		}
 		return any_type<T>::read(L, index);
 	}
-	template<typename T> inline T check(state *L, int index)
-	{
-		return check<T>(L->cptr(), index);
-	}
+	
+	template<typename T>
+	inline T check(state *L, int index) {return check<T>(L->cptr(), index);}
 
 	template<class RT>
 	struct result_matcher

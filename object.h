@@ -13,10 +13,10 @@ namespace luastub
 		class indexer
 		{
 		public:
-			inline indexer(const object &other)
+			inline indexer(const object &o)
 			{
-				m_state = other.m_state;
-				m_state->rawgeti(LUA_REGISTRYINDEX, other.m_ref);
+				o.push();
+				m_state = o.m_state;
 				m_index = m_state->gettop();
 			}
 			inline ~indexer() {m_state->settop(m_index - 1);}
@@ -29,32 +29,35 @@ namespace luastub
 		object() : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
 		{
 		}
+		explicit object(state *state) : m_state(state), m_refcount(NULL), m_ref(LUA_NOREF)
+		{
+		}
 		object(state *state, int index) : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
 		{
 			state->pushvalue(index);
 			pop(state, -1);
 		}
-		object(const object &other) : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
+		object(const object &o) : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
 		{
-			*this = other;
+			*this = o;
 		}
-		object(const stack_index &other) : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
+		object(const stack_index &i) : m_state(NULL), m_refcount(NULL), m_ref(LUA_NOREF)
 		{
-			*this = other;
+			*this = i;
 		}
-		object &operator =(const object &other)
+		object &operator =(const object &o)
 		{
 			release();
-			m_state = other.m_state;
-			m_ref = other.m_ref;
-			m_refcount = other.m_refcount;
+			m_state = o.m_state;
+			m_ref = o.m_ref;
+			m_refcount = o.m_refcount;
 			if (m_refcount)
 				++(*m_refcount);
 			return *this;
 		}
-		object &operator =(const stack_index &other)
+		object &operator =(const stack_index &i)
 		{
-			pop(other.m_state, other.m_index);
+			pop(i.m_state, i.m_index);
 			return *this;
 		}
 		~object()
@@ -65,18 +68,21 @@ namespace luastub
 		{
 			release();
 			
-			if(state->type(index) != LUA_TNIL)
+			m_state = state;
+			if(m_state->type(index) != LUA_TNIL)
 			{
-				m_state = state;
 				m_state->pushvalue(index);
 				m_ref = m_state->ref(LUA_REGISTRYINDEX);
 				m_refcount = new int(1);
 			}
-			state->remove(index);
+			m_state->remove(index);
 		}
 		void push() const
 		{
-			m_state->rawgeti(LUA_REGISTRYINDEX, m_ref);
+			if (m_refcount)
+				m_state->rawgeti(LUA_REGISTRYINDEX, m_ref);
+			else
+				m_state->pushnil();
 		}
 		void release()
 		{
@@ -101,9 +107,13 @@ namespace luastub
 		{
 			return m_state ? m_state->cptr() : NULL;
 		}
-		bool valid() const
+		bool isnone() const
 		{
-			return m_refcount != NULL;
+			return m_state == NULL;
+		}
+		bool isnil() const
+		{
+			return m_refcount == NULL;
 		}
 		bool isnumber() const
 		{
@@ -139,13 +149,6 @@ namespace luastub
 		{
 			indexer index(*this);
 			return m_state->islightuserdata(index);
-		}
-		bool isnil() const
-		{
-			if (valid())
-				return true;
-			indexer index(*this);
-			return m_state->isnil(index);
 		}
 		bool isboolean() const
 		{
@@ -256,7 +259,7 @@ namespace luastub
 		}
 		bool operator ==(const nil_t&) const
 		{
-			return !valid() || isnil();
+			return isnil();
 		}
 		bool operator ==(const char *value) const
 		{
@@ -271,13 +274,13 @@ namespace luastub
 		}
 		bool operator ==(const object &value) const
 		{
-			if (valid() && value.valid())
+			if (!isnil() && !value.isnil())
 			{
 				indexer index(*this);
 				indexer index2(value);
 				return m_state->equal(index, index2);
 			}
-			return !valid() && !value.valid();
+			return isnil() && value.isnil();
 		}
 		
 		// get
@@ -387,8 +390,8 @@ namespace luastub
 			unsigned char *buffer = (unsigned char *)m_state->newuserdata(sizeof(func));
 			memcpy(buffer, &func, sizeof(func));
 			m_state->insert(-1 - nupvalues);
-			object other = m_state->pushcclosure(cclosure, nupvalues + 1);
-			set(key, other);
+			object o = m_state->pushcclosure(cclosure, nupvalues + 1);
+			set(key, o);
 			m_state->settop(top);
 		}
 		template<typename Callee, typename Method>
@@ -399,8 +402,8 @@ namespace luastub
 			memcpy(buffer, &callee, sizeof(callee));
 			memcpy(buffer + sizeof(callee), &method, sizeof(method));
 			m_state->insert(-1 - nupvalues);
-			object other = m_state->pushcclosure(cclosure, nupvalues + 1);
-			set(key, other);
+			object o = m_state->pushcclosure(cclosure, nupvalues + 1);
+			set(key, o);
 			m_state->settop(top);
 		}
 		void _Def(const char *key)
@@ -432,12 +435,12 @@ namespace luastub
 		class e_invalid_iterator {};
 	public:
 		template<typename T>
-		table_iterator(T other)
+		table_iterator(T o)
 		{
 			m_end = false;
-			m_state = other.getstate();
+			m_state = o.getstate();
 			m_top = m_state->gettop();
-			other.push();
+			o.push();
 			m_state->pushnil();
 			next();
 		}
@@ -500,5 +503,9 @@ namespace luastub
 		static bool match(lua_State *L, int index) {return true;}
 		static object read(lua_State *L, int index) {return object(state::from(L), index);}
 	};
+	template<>
+	struct any_type <object&>;
+	template<>
+	struct any_type <const object&>;
 }
 #endif
