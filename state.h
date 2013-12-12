@@ -90,10 +90,12 @@ namespace luastub
 		inline stack_index pushthread() {lua_pushthread(cptr()); return stack_index(this, gettop());}
 			
 		inline stack_index getglobals() {pushvalue(LUA_GLOBALSINDEX); return stack_index(this, gettop());}
-		inline stack_index getglobal(const char *var) {getfield(LUA_GLOBALSINDEX, var); return stack_index(this, gettop());}
+		inline stack_index getglobal(const char *key) {getfield(LUA_GLOBALSINDEX, key); return stack_index(this, gettop());}
 		inline stack_index getstack(int index) {return stack_index(this, index);}
-		inline stack_index getregistry() {lua_getregistry(cptr()); return stack_index(this, gettop());}
+		inline stack_index getregistrys() {lua_getregistry(cptr()); return stack_index(this, gettop());}
+		inline stack_index getregistry(const char *key) {getfield(LUA_REGISTRYINDEX, key); return stack_index(this, gettop());}
 		
+
 		inline stack_index gettable(int index) {lua_gettable(cptr(), index); return stack_index(this, gettop());}
 		inline stack_index getfield(int index, const char *key) {lua_getfield(cptr(), index, key); return stack_index(this, gettop());}
 		inline stack_index rawget(int index) {lua_rawget(cptr(), index); return stack_index(this, gettop());}
@@ -167,22 +169,12 @@ namespace luastub
 		{
 			va_list args;
 			va_start(args, fmt);
-			luaL_where(cptr(), 1);
-			lua_pushvfstring(cptr(), fmt, args);
-			va_end(args);
-			lua_concat(cptr(), 2);
-			return lua_error(cptr());
-		}
-		inline void traceback(const char *fmt, ...)
-		{
 			lua_getglobal(cptr(), "debug");
 			lua_getfield(cptr(), -1, "traceback");
-			va_list args;
-			va_start(args, fmt);
-			luaL_where(cptr(), 1);
 			lua_pushvfstring(cptr(), fmt, args);
 			va_end(args);
 			lua_call(cptr(), 1, 1);
+			return lua_error(cptr());
 		}
 	};
 	

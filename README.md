@@ -4,8 +4,8 @@ A lua wraper for c++, as flexible as LuaPlus, as convenient as luabind
 
 ##feature
 
-* think in lua
-* namimg the same as lua
+* strong safety, detialed error info
+* auto type conversion
 * not invade into lua source code
 * no dependency
 * no need to compile
@@ -30,8 +30,8 @@ use lua state:
 
 get lua object:
 
-    luastub::object g = L->getglobals();
-    luastub::object tb = g["tb"]
+    luastub::object _G = L->getglobals();
+    luastub::object tb = _G["tb"]
 
 or
 

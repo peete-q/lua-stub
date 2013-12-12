@@ -91,8 +91,11 @@ namespace luastub
 				const char *tname = cclass_manager::instance()->get<T>();
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
+				luaL_where(L, 3);
 				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) miss __self", tname, lua_topointer(L, index));
-				lua_call(L, 1, 1);
+				lua_concat(L, 2);
+				lua_pushnumber(L, 3);
+				lua_call(L, 2, 1);
 				lua_error(L);
 			}
 			lua_pushvalue(L, index);
@@ -102,8 +105,11 @@ namespace luastub
 				const char *tname = cclass_manager::instance()->get<T>();
 				lua_getglobal(L, "debug");
 				lua_getfield(L, -1, "traceback");
-				lua_pushfstring(L, "error: object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
-				lua_call(L, 1, 1);
+				luaL_where(L, 3);
+				lua_pushfstring(L, "object{cclass:%s} (table: %p) has released", tname, lua_topointer(L, 1));
+				lua_concat(L, 2);
+				lua_pushnumber(L, 3);
+				lua_call(L, 2, 1);
 				lua_error(L);
 			}
 			T *ptr = (T*)lua_touserdata(L, -1);
@@ -115,9 +121,12 @@ namespace luastub
 			const char *tname = cclass_manager::instance()->get<T>();
 			lua_getglobal(L, "debug");
 			lua_getfield(L, -1, "traceback");
-			lua_pushfstring(L, "expected object{cclass:%s}, got %s", tname, lua_typename(L, type));
-			lua_call(L, 1, 1);
-			luaL_argerror(L, index, lua_tostring(L, -1));
+			luaL_where(L, 3);
+			lua_pushfstring(L, "bad argument #%d (expected object{cclass:%s}, got %s)", index, tname, lua_typename(L, type));
+			lua_concat(L, 2);
+			lua_pushnumber(L, 3);
+			lua_call(L, 2, 1);
+			lua_error(L);
 		}
 		return NULL;
 	}
@@ -454,12 +463,15 @@ namespace luastub
 			const char *tname = cclass_manager::instance()->get<T>();
 			lua_getglobal(L, "debug");
 			lua_getfield(L, -1, "traceback");
+			luaL_where(L, 1);
 			if (tname)
-				lua_pushfstring(L, "expected object{cclass:%s}, got %s", tname, luaL_typename(L, index));
+				lua_pushfstring(L, "bad argument #%d (expected object{cclass:%s}, got %s)", index, tname, luaL_typename(L, index));
 			else
-				lua_pushfstring(L, "expected %s, got %s", any_type<T>::type(), luaL_typename(L, index));
-			lua_call(L, 1, 1);
-			luaL_argerror(L, index, lua_tostring(L, -1));
+				lua_pushfstring(L, "bad argument #%d (expected %s, got %s)", index, any_type<T>::type(), luaL_typename(L, index));
+			lua_concat(L, 2);
+			lua_pushnumber(L, 1);
+			lua_call(L, 2, 1);
+			lua_error(L);
 		}
 		return any_type<T>::read(L, index);
 	}

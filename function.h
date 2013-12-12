@@ -39,8 +39,7 @@ namespace luastub {
 
 			if (L->pcall(0, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -55,8 +54,7 @@ namespace luastub {
 
 			if (L->pcall(1, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -72,8 +70,7 @@ namespace luastub {
 
 			if (L->pcall(2, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -90,8 +87,7 @@ namespace luastub {
 
 			if (L->pcall(3, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -109,8 +105,7 @@ namespace luastub {
 
 			if (L->pcall(4, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -129,8 +124,7 @@ namespace luastub {
 
 			if (L->pcall(5, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -150,8 +144,7 @@ namespace luastub {
 
 			if (L->pcall(6, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -172,8 +165,7 @@ namespace luastub {
 
 			if (L->pcall(7, 1, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			return read<RT>(L, -1);
 		}
@@ -213,8 +205,7 @@ namespace luastub {
 
 			if (L->pcall(0, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -228,8 +219,7 @@ namespace luastub {
 
 			if (L->pcall(1, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -244,8 +234,7 @@ namespace luastub {
 
 			if (L->pcall(2, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -261,8 +250,7 @@ namespace luastub {
 
 			if (L->pcall(3, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -279,8 +267,7 @@ namespace luastub {
 
 			if (L->pcall(4, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -298,8 +285,7 @@ namespace luastub {
 
 			if (L->pcall(5, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -318,8 +304,7 @@ namespace luastub {
 
 			if (L->pcall(6, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -339,8 +324,7 @@ namespace luastub {
 
 			if (L->pcall(7, 0, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 		}
 
@@ -379,8 +363,7 @@ namespace luastub {
 
 			if (L->pcall(0, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -398,8 +381,7 @@ namespace luastub {
 
 			if (L->pcall(1, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -418,8 +400,7 @@ namespace luastub {
 
 			if (L->pcall(2, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -439,8 +420,7 @@ namespace luastub {
 
 			if (L->pcall(3, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -461,8 +441,7 @@ namespace luastub {
 
 			if (L->pcall(4, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -484,8 +463,7 @@ namespace luastub {
 
 			if (L->pcall(5, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -508,8 +486,7 @@ namespace luastub {
 
 			if (L->pcall(6, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)
@@ -533,8 +510,7 @@ namespace luastub {
 
 			if (L->pcall(7, LUA_MULTRET, 0)) {
 				const char *message = L->tostring(-1);
-				L->traceback(message);
-				L->error();
+				L->error(message);
 			}
 			multi_result res;
 			for (int n = sp.gettop() + 1; n <= L->gettop(); ++n)

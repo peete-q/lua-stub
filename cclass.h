@@ -68,9 +68,7 @@ namespace luastub
 			const char *name = cclass_manager::instance()->get<T>();
 			if (name)
 			{
-				stack_protector sp(L);
-				L->pushstring(name);
-				m_metatable = L->gettable(LUA_REGISTRYINDEX);
+				m_metatable = L->getregistry(name);
 			}
 		}
 		bool isnone() const
@@ -96,11 +94,26 @@ namespace luastub
 			m_metatable.set("__index", m_metatable);
 			cclass_manager::instance()->add<T>(name);
 		}
+        cclass &inherit(const cclass &c)
+		{
+			state *L = m_metatable.getstate();
+			object meta = L->newtable();
+			meta.set("__index", c.m_metatable); 
+			m_metatable.setmetatable(meta);
+			return *this;
+		}
+        cclass &inherit(const object &o)
+		{
+			state *L = m_metatable.getstate();
+			object meta = L->newtable();
+			meta.set("__index", o); 
+			m_metatable.setmetatable(meta);
+			return *this;
+		}
 		cclass &inherit(const char *name)
 		{
 			state *L = m_metatable.getstate();
-			stack_protector sp(L);
-			object R = L->getregistry();
+			object R = L->getregistrys();
 			object meta = L->newtable();
 			meta.set("__index", R.get(name));
 			m_metatable.setmetatable(meta);
@@ -219,7 +232,7 @@ namespace luastub
 		object boxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
-			object R = L->getregistry();
+			object R = L->getregistrys();
 			object o = R.get(lightuserdata<T>(ptr));
 			if (o != nil)
 				return o;
@@ -234,8 +247,7 @@ namespace luastub
 		void unboxptr(T *ptr)
 		{
 			state *L = m_metatable.getstate();
-			stack_protector sp(L);
-			object R = L->getregistry();
+			object R = L->getregistrys();
 			R.set(lightuserdata<T>(ptr), nil);
 		}
 	private:
