@@ -1,7 +1,7 @@
 
 CC = g++
 CFLAGS = -g -I../include
-LFLAGS = -L. -llua
+LFLAGS = -L../lib -llua
 T = test.exe
 OBJ = test.o
 
